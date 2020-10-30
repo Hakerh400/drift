@@ -14,8 +14,7 @@ class Entity{
     this.system = system;
     this.file = file;
     this.name = name;
-
-    this.parse(Parser.parse(system.pa, file).uni);
+    this.top = Parser.parse(system.pa, file).uni;
   }
 
   hasRef(name){
@@ -44,11 +43,15 @@ class Axiom extends Entity{
 }
 
 class Theorem extends Entity{
-  parse(top){
-    this.vars = O.obj();
-    this.args = [];
-    this.steps = O.obj();
-    this.result = null;
+  vars = O.obj();
+  args = [];
+  steps = O.obj();
+  result = null;
+
+  boundParseExprRec = this.parseExprRec.bind(this);
+
+  constructor(system, name, file){
+    super(system, name, file);
 
     let lastStep = null;
 
@@ -87,7 +90,7 @@ class Theorem extends Entity{
       if(elem.v){
         const index = elem.uni.int;
 
-        if(index > BigInt(this.args.length))
+        if(index === 0n || index > BigInt(this.args.length))
           elem.err(`Undefined argument index ${index}`);
 
         return this.args[index];
@@ -104,12 +107,46 @@ class Theorem extends Entity{
     return new Invocation(name, args);
   }
 
-  parseExpr(elem, formal=0){
+  parseExpr(elem, formal){
+    return O.rec(this.boundParseExprRec, elem, formal);
+  }
+
+  *parseExprRec(elem, formal=0){
+    let name;
+    let args;
+
+    if(elem.v){
+      const {fst} = elem;
+
+      if(fst.v){
+        const ident = fst.uni;
+        const varName = ident.m;
+
+        if(this.hasVar(varName))
+          return this.getVar(varName);
+
+        if(!formal)
+          ident.err(`Undefined variable ${O.sf(varName)}`);
+
+        const vari = new VariableExpression(varName);
+        this.addVar(vari);
+
+        return vari;
+      }
+
+      name = fst.m;
+      args = elem.a(1);
+    }else{
+      name = elem.m;
+      args = [];
+    }
+
     
   }
 
   hasVar(name){ return name in this.vars; }
-  addVar(name){ this.vars[name] = 1; }
+  getVar(name){ return this.vars[name]; }
+  addVar(vari){ this.vars[vari.name] = vari; }
 
   hasStep(name){ return name in this.steps; }
   getStep(name){ return this.steps[name]; }

@@ -273,6 +273,10 @@ class ListElement extends O.Stringifiable{
     return arr;
   }
 
+  empty(){
+    return this.n === 0;
+  }
+
   err(msg, line=this.startLine, pos=this.startPos){
     this.parser.err(msg, line, pos);
   }

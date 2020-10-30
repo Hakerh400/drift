@@ -1,0 +1,5 @@
+(structs
+  set pred |-
+  ident first next
+  ->
+)

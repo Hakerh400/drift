@@ -4,7 +4,10 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
+const System = require('./system');
 const Parser = require('./parser');
+
+const {ListElement, Identifier, List} = Parser;
 
 const cwd = __dirname;
 const defaultPath = path.join(cwd, '..');
@@ -18,17 +21,63 @@ class ProofAssistant{
     this.systemsDir = path.join(pth, 'systems');
     this.systemsInfoFile = path.join(this.systemsDir, 'info.txt');
 
-    if(!fs.existsSync(this.systemsDir)){
-      fs.mkdirSync(this.systemsDir);
+    if(!this.md(this.systemsDir))
       O.wfs(this.systemsInfoFile, '(systems)');
-    }
   }
 
-  getSystems(){
-    const top = Parser.parse(this, this.systemsInfoFile);
-    const systems = top.uni.ta('systems').map(a => a.ident().name);
+  exi(file){
+    return fs.existsSync(file);
+  }
 
-    log(systems);
+  nexi(file){
+    return !this.exi(file);
+  }
+
+  md(dir){
+    if(fs.existsSync(dir)) return 1;
+    fs.mkdirSync(dir);
+    return 0;
+  }
+
+  load(file){
+    return Parser.parse(this, file);
+  }
+
+  save(file, list){
+    if(!(list instanceof ListElement))
+      list = ListElement.from(list);
+
+    assert(list.v);
+    O.wfs(file, list.elems.join('\n'));
+  }
+
+  getSystemNames(){
+    const top = this.load(this.systemsInfoFile).uni;
+    return top.sndp('systems');
+  }
+
+  hasSystem(name){
+    return this.getSystemNames().includes(name);
+  }
+
+  getSystem(name){
+    assert(this.hasSystem(name));
+
+    return new System(this, name);
+  }
+
+  createSystem(name){
+    if(!/^[a-z0-9]+(?:\-[a-z0-9]+)*$/.test(name))
+      this.err(`Invalid system name ${O.sf(name)}`);
+
+    const systems = this.getSystemNames();
+
+    if(systems.includes(name))
+      this.err(`System ${O.sf(name)} already exists`);
+
+    this.save(this.systemsInfoFile, [['systems', ...systems, name]]);
+
+    return new System(this, name);
   }
 
   sErr(msg, file, str, line, pos){

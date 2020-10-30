@@ -1,0 +1,3 @@
+(axiom wff-id-n ((set (ident ((a)))))
+  (set (ident (next ((a)))))
+)

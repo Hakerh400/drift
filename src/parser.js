@@ -76,15 +76,15 @@ class Parser{
   }
 
   createList(){
-    return new List(this, this.cLinePrev, this.cPosPrev);
+    return new List(null, this, this.cLinePrev, this.cPosPrev);
   }
 
   createTopList(){
-    return new TopList(this);
+    return new TopList(null, this);
   }
 
   createIdent(name){
-    const elem = new Identifier(this, this.tLinePrev, this.tPosPrev, name);
+    const elem = new Identifier(name, this, this.tLinePrev, this.tPosPrev);
 
     elem.endLine = this.cLinePrev;
     elem.endPos = this.cPosPrev;
@@ -186,10 +186,44 @@ class Parser{
 }
 
 class ListElement extends O.Stringifiable{
+  static from(e, top=0){
+    const s = a => typeof a === 'string';
+
+    if(s(e))
+      return new Identifier(e);
+
+    const topElem = top ? new TopList() : new List();
+    const stack = [[e, topElem]];
+
+    while(stack.length !== 0){
+      const frame = O.last(stack);
+      const [arr, elem] = frame;
+      const i = elem.n;
+
+      if(arr.length === i){
+        stack.pop();
+        continue;
+      }
+
+      const e = arr[i];
+
+      if(s(e)){
+        elem.push(new Identifier(e));
+        continue;
+      }
+
+      const elem1 = new List();
+      elem.push(elem1);
+      stack.push([e, elem1]);
+    }
+
+    return topElem;
+  }
+
   endLine = null;
   endPos = null;
 
-  constructor(parser, startLine, startPos){
+  constructor(parser=null, startLine=null, startPos=null){
     super();
 
     this.parser = parser;
@@ -197,15 +231,16 @@ class ListElement extends O.Stringifiable{
     this.startPos = startPos;
   }
 
-  get isIdent(){ return 0; }
-  get isList(){ return 0; }
+  get i(){ return 0; }
+  get v(){ return 0; }
 
   ident(){ O.virtual('ident'); }
   list(){ O.virtual('list'); }
   len(){ O.virtual('len'); }
   type(){ O.virtual('type'); }
-  get fst(){ O.virtual('type'); }
-  get uni(){ O.virtual('type'); }
+  get fst(){ O.virtual('fst'); }
+  get uni(){ O.virtual('uni'); }
+  get n(){ O.virtual('n'); }
 
   lenp(start){ return this.len(start, null); }
 
@@ -218,8 +253,24 @@ class ListElement extends O.Stringifiable{
     return this.lenp(i).elems.slice(i);
   }
 
-  ta(type){
-    return this.type(type).a(1);
+  ta(type, func=null){
+    let elems = this.type(type).a(1);
+    if(func !== null) elems = elems.map(func);
+    return elems;
+  }
+
+  sndp(type){
+    const obj = O.obj();
+
+    return this.ta(type, a => {
+      const {name} = a.ident();
+
+      if(name in obj)
+        a.err(`Duplicates are not allowed`);
+
+      obj[name] = 1;
+      return name;
+    });
   }
 
   err(msg, line=this.startLine, pos=this.startPos){
@@ -231,12 +282,12 @@ class ListElement extends O.Stringifiable{
 }
 
 class Identifier extends ListElement{
-  constructor(parser, startLine, startPos, name=null){
+  constructor(name=null, parser, startLine, startPos){
     super(parser, startLine, startPos);
     this.name = name;
   }
 
-  get isIdent(){ return 1; }
+  get i(){ return 1; }
 
   ident(name=null){
     if(name !== null && name !== this.name)
@@ -253,6 +304,7 @@ class Identifier extends ListElement{
   type(){ this.list(); }
   get fst(){ this.list(); }
   get uni(){ this.list(); }
+  get n(){ this.list(); }
 
   get chNum(){ return 0; }
 
@@ -262,8 +314,10 @@ class Identifier extends ListElement{
 }
 
 class List extends ListElement{
-  constructor(parser, startLine, startPos, elems=[]){
+  constructor(elems=null, parser, startLine, startPos){
     super(parser, startLine, startPos);
+
+    if(elems === null) elems = [];
     this.elems = elems;
   }
 
@@ -271,7 +325,7 @@ class List extends ListElement{
     this.elems.push(elem);
   }
 
-  get isList(){ return 1; }
+  get v(){ return 1; }
   get isTop(){ return 0; }
 
   ident(){
@@ -308,6 +362,10 @@ class List extends ListElement{
     return this.len(1).fst;
   }
 
+  get n(){
+    return this.elems.length;
+  }
+
   get chNum(){ return this.elems.length; }
   getCh(i){ return this.elems[i]; }
 
@@ -320,11 +378,6 @@ class List extends ListElement{
 }
 
 class TopList extends List{
-  constructor(parser, elems=[]){
-    super(parser, null, null);
-    this.elems = elems;
-  }
-
   get isTop(){ return 1; }
 
   ident(){ assert.fail(); }
@@ -335,7 +388,7 @@ class TopList extends List{
     const n = elems.length;
 
     if(n === 0)
-      this.err(msg !== null ? `Unexpected end of the source code` : msg, 1, 1)
+      this.err(msg !== null ? `Unexpected end of the source code` : msg, 1, 1);
 
     O.last(elems).errEnd(msg !== null ? msg : `Superfluous element found in the list`);
   }

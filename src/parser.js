@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
-const debug = require('./debug');
 
 class Parser{
   static parse(pa, file){
@@ -257,20 +256,6 @@ class ListElement extends O.Stringifiable{
     let elems = this.type(type).a(1);
     if(func !== null) elems = elems.map(func);
     return elems;
-  }
-
-  sndp(type){
-    const obj = O.obj();
-
-    return this.ta(type, a => {
-      const {name} = a.ident();
-
-      if(name in obj)
-        a.err(`Duplicates are not allowed`);
-
-      obj[name] = 1;
-      return name;
-    });
   }
 
   err(msg, line=this.startLine, pos=this.startPos){

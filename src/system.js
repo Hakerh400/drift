@@ -4,12 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
+const Entity = require('./entity');
 const NameChecker = require('./name-checker');
-const StringSet = require('./string-set');
+
+const {dataTypesObj, dataTypesArr} = Entity;
 
 class System{
-  dirs = O.obj();
-  data = O.obj();
+  #structs = null;
+  #dataColls = O.arr2obj(dataTypesArr, null);
 
   constructor(pa, name){
     this.pa = pa;
@@ -17,24 +19,6 @@ class System{
 
     const dir = path.join(pa.systemsDir, name);
     pa.md(dir);
-
-    const dirs = [
-      'funcs',
-      'axioms',
-      'theorems',
-    ];
-
-    const dirsObj = this.dirs;
-    const {data} = this;
-
-    for(const d of dirs){
-      const subDir = path.join(dir, d);
-
-      pa.md(subDir);
-
-      dirsObj[d] = subDir;
-      data[d] = null;
-    }
 
     const structsFile = path.join(dir, 'structs.txt');
 
@@ -45,27 +29,48 @@ class System{
     this.structsFile = structsFile;
   }
 
-  getStructs(){
+  get structs(){
+    if(this.#structs === null)
+      this.#structs = this.#loadStructs();
+
+    return this.#structs;
+  }
+
+  #loadStructs(){
     const top = this.pa.load(this.structsFile).uni;
-    const set = new StringSet();
+    const obj = O.obj();
 
     top.ta('structs', a => {
-      const {name} = a.ident();
+      const name = a.m;
 
-      if(set.has(name))
+      if(name in obj)
         a.err(`This struct has already been declared`);
 
-      set.add(name);
+      obj[name] = null;
       return name;
     });
 
-    return set;
+    return obj;
   }
 
-  getDirContent(type){
-    const dir = this.dirs[type];
+  hasStruct(name){
+    return name in this.structs;
+  }
+
+  getEntColl(type){
+    assert(type in dataTypesObj);
+    const dataColls = this.#dataColls;
+
+    if(dataColls[type] === null)
+      dataColls[type] = this.#loadEntColl(type);
+
+    return dataColls[type];
+  }
+
+  #loadEntColl(type){
+    const dir = path.join(this.dir, type);
     const files = fs.readdirSync(dir);
-    const set = new StringSet();
+    const obj = O.obj();
 
     for(const base of files){
       if(!base.endsWith('.txt')) continue;
@@ -73,23 +78,67 @@ class System{
       const name = base.slice(0, base.length - 4);
       if(!NameChecker.check(name)) continue;
 
-      set.add(name);
+      obj[name] = null;
     }
 
-    return set;
+    return obj;
   }
 
-  getData(type){
-    const {data} = this;
+  getEnt(type, name=null){
+    if(name === null){
+      name = type;
+      type = this.getTypeOf(name);
+      if(type === null) return null;
+    }
 
-    if(data[type] === null)
-      data[type] = this.getDirContent(type);
+    const coll = this.getEntColl(type);
 
-    return data[type];
+    if(!(name in coll)){
+      this.err('')
+    }
+
+    if(coll[name] === null);
+      coll[name] = this.#loadEnt(type, name);
+
+    return coll[name];
   }
 
-  verifyTheorem(){
-    
+  #loadEnt(type, name){
+    const file = path.join(this.dir, type, `${name}.txt`);
+    const ent = new dataTypesObj[type](this, name, file);
+
+    return ent;
+  }
+
+  getTypeOf(name){
+    let type = null;
+
+    for(const t of dataTypesArr){
+      const coll = this.getEntColl(t);
+      if(!(name in coll)) continue;
+
+      if(type !== null)
+        this.getEnt(t, name).err(`${
+          O.sf(name)} has already been declared in ${
+          O.sf(type)}`);
+
+      type = t;
+    }
+
+    return type;
+  }
+
+  hasEnt(name){
+    return this.getTypeOf(name, 0) === null;
+  }
+
+  verifyTheorem(name){
+    const th = this.getEnt(name);
+    log(th);
+  }
+
+  err(msg){
+    this.pa.err(msg);
   }
 }
 

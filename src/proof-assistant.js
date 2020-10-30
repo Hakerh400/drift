@@ -7,7 +7,6 @@ const O = require('omikron');
 const System = require('./system');
 const Parser = require('./parser');
 const NameChecker = require('./name-checker');
-const StringSet = require('./string-set');
 
 const {ListElement, Identifier, List} = Parser;
 
@@ -15,9 +14,8 @@ const cwd = __dirname;
 const defaultPath = path.join(cwd, '..');
 
 class ProofAssistant{
-  #systems = null;
-
   systemNameChecker = new NameChecker(this, 'system');
+  #systems = null;
 
   constructor(pth=defaultPath){
     assert(path.isAbsolute(pth));
@@ -59,40 +57,40 @@ class ProofAssistant{
 
   get systems(){
     if(this.#systems === null)
-      this.loadSystems();
+      this.#systems = this.#loadSystems();
 
     return this.#systems;
   }
 
-  loadSystems(){
+  #loadSystems(){
     const top = this.load(this.systemsInfoFile).uni;
-    const set = new StringSet();
+    const obj = O.obj();
 
     top.ta('systems', a => {
-      const {name} = a.ident();
+      const name = a.m;
 
-      if(set.has(name))
+      if(name in obj)
         a.err(`This system has already been declared`);
 
-      set.add(name);
+      obj[name] = null;
       return name;
     });
 
-    this.#systems = set;
-  }
-
-  getSystems(){
-    return this.systems;
+    return obj;
   }
 
   hasSystem(name){
-    return this.systems.has(name);
+    return name in this.systems;
   }
 
   getSystem(name){
-    assert(this.hasSystem(name));
+    const {systems} = this;
+    assert(name in systems);
 
-    return new System(this, name);
+    if(systems[name] === null)
+      systems[name] = new System(this, name);
+
+    return systems[name];
   }
 
   createSystem(name){
@@ -100,13 +98,15 @@ class ProofAssistant{
 
     const {systems} = this;
 
-    if(systems.has(name))
+    if(name in systems)
       this.err(`System ${O.sf(name)} already exists`);
 
     this.save(this.systemsInfoFile, [['systems', ...systems, name]]);
-    systems.add(name);
 
-    return new System(this, name);
+    const system = new System(this, name);
+    systems[name] = system;
+
+    return system;
   }
 
   sErr(msg, file, str, line, pos){
@@ -116,7 +116,7 @@ class ProofAssistant{
       file}:${
       line}\n\n${
       str}\n${
-      `${' '.repeat(pos - 1)}^`}\n\nSyntaxError: ${
+      `${' '.repeat(pos - 1)}^`}\n\nError: ${
       msg}`);
 
     O.exit();

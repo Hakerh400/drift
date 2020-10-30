@@ -230,7 +230,7 @@ class ListElement extends O.Stringifiable{
     this.startPos = startPos;
   }
 
-  get i(){ return 0; }
+  get s(){ return 0; }
   get v(){ return 0; }
 
   ident(){ O.virtual('ident'); }
@@ -241,6 +241,19 @@ class ListElement extends O.Stringifiable{
   get uni(){ O.virtual('uni'); }
   get n(){ O.virtual('n'); }
 
+  get m(){
+    return this.ident().name;
+  }
+
+  get nat(){
+    const s = this.m;
+
+    if(!/^(?:0|[1-9][0-9]*)$/.test(s))
+      this.err(`Expected a natural number, but found ${O.sf(s)}`);
+
+    return BigInt(s);
+  }
+
   lenp(start){ return this.len(start, null); }
 
   e(i){
@@ -248,14 +261,16 @@ class ListElement extends O.Stringifiable{
     return this.elems[i];
   }
 
-  a(i=0){
-    return this.lenp(i).elems.slice(i);
+  a(i=0, func=null){
+    let arr = this.lenp(i).elems.slice(i);
+    if(func !== null) arr = arr.map(func);
+    return arr;
   }
 
   ta(type, func=null){
-    let elems = this.type(type).a(1);
-    if(func !== null) elems = elems.map(func);
-    return elems;
+    let arr = this.type(type).a(1);
+    if(func !== null) arr = arr.map(func);
+    return arr;
   }
 
   err(msg, line=this.startLine, pos=this.startPos){
@@ -272,7 +287,7 @@ class Identifier extends ListElement{
     this.name = name;
   }
 
-  get i(){ return 1; }
+  get s(){ return 1; }
 
   ident(name=null){
     if(name !== null && name !== this.name)

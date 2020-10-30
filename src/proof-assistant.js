@@ -25,8 +25,23 @@ class ProofAssistant{
   }
 
   getSystems(){
-    const parsed = Parser.parse(this, this.systemsInfoFile);
-    log(parsed.join('\n'));
+    const top = Parser.parse(this, this.systemsInfoFile);
+    const systems = top.uni.ta('systems').map(a => a.ident().name);
+
+    log(systems);
+  }
+
+  sErr(msg, file, str, line, pos){
+    assert(typeof msg === 'string');
+
+    log(`${
+      file}:${
+      line}\n\n${
+      str}\n${
+      `${' '.repeat(pos - 1)}^`}\n\nSyntaxError: ${
+      msg}`);
+
+    O.exit();
   }
 
   err(msg){

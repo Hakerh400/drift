@@ -19,10 +19,14 @@ class Parser{
     this.strLen = this.str.length;
     this.index = 0;
 
-    this.line = 1;
-    this.pos = 1;
-    this.linePrev = 1;
-    this.posPrev = 1;
+    this.cLine = 1;
+    this.cPos = 1;
+    this.tLine = 1;
+    this.tPos = 1;
+    this.cLinePrev = 1;
+    this.cPosPrev = 1;
+    this.tLinePrev = 1;
+    this.tPosPrev = 1;
 
     this.eof = 0;
   }
@@ -30,15 +34,12 @@ class Parser{
   parse(){
     assert(this.index === 0 && !this.eof);
 
-    const topElems = [];
+    const topList = this.createTopList();
     const stack = [];
-
-    let firstParenLine = null;
-    let firstParenPos = null;
 
     const push = elem => {
       if(stack.length === 0){
-        topElems.push(elem);
+        topList.push(elem);
         return;
       }
 
@@ -47,22 +48,19 @@ class Parser{
 
     for(const tk of this.getAllTokens()){
       if(tk === '('){
-        if(firstParenLine === null){
-          firstParenLine = this.linePrev;
-          firstParenPos = this.posPrev;
-        }
-
         const elem = this.createList();
         stack.push(elem);
-        
+
         continue;
       }
 
       if(tk === ')'){
         if(stack.length === 0)
-          this.err('Unmatched closed parenthese');
+          this.err(`Unmatched closed parenthese`);
 
         const elem = stack.pop();
+        elem.endLine = this.cLinePrev;
+        elem.endPos = this.cPosPrev;
         push(elem);
 
         continue;
@@ -72,17 +70,26 @@ class Parser{
     }
 
     if(stack.length !== 0)
-      this.err('Unmatched open parenthese', firstParenLine, firstParenPos);
+      stack[0].err(`Unmatched open parenthese`);
 
-    return topElems;
+    return topList;
   }
 
   createList(){
-    return new List(this, this.linePrev, this.posPrev);
+    return new List(this, this.cLinePrev, this.cPosPrev);
+  }
+
+  createTopList(){
+    return new TopList(this);
   }
 
   createIdent(name){
-    return new Identifier(this, this.linePrev, this.posPrev, name);
+    const elem = new Identifier(this, this.tLinePrev, this.tPosPrev, name);
+
+    elem.endLine = this.cLinePrev;
+    elem.endPos = this.cPosPrev;
+
+    return elem;
   }
 
   nextChar(adv=1){
@@ -94,18 +101,18 @@ class Parser{
     const c = this.str[this.index];
 
     if(!/[\t\n -~]/.test(c))
-      this.err('Invalid character', this.line, this.pos);
+      this.err('Illegal character', this.cLine, this.cPos);
 
     if(adv){
       this.index++;
-      this.linePrev = this.line;
-      this.posPrev = this.pos;
+      this.cLinePrev = this.cLine;
+      this.cPosPrev = this.cPos;
 
       if(c === '\n'){
-        this.line++;
-        this.pos = 1;
+        this.cLine++;
+        this.cPos = 1;
       }else{
-        this.pos++;
+        this.cPos++;
       }
     }
 
@@ -128,15 +135,16 @@ class Parser{
       this.nextChar(1);
     }
 
-    const linePrev = this.line;
-    const posPrev = this.pos;
+    this.tLinePrev = this.cLine;
+    this.tPosPrev = this.cPos;
 
     const c = this.nextChar(1);
     assert(c !== null);
 
-    if(/(?![\(\)])[!-~]/.test(c)){
-      let ident = c;
+    const isIdent = /(?![\(\)])[!-~]/.test(c);
+    let ident = c;
 
+    if(isIdent){
       while(1){
         const c = this.nextChar(0);
 
@@ -147,15 +155,12 @@ class Parser{
 
         this.nextChar(1);
       }
-
-      this.linePrev = linePrev;
-      this.posPrev = posPrev;
-
-      return ident;
     }
 
-    this.linePrev = linePrev;
-    this.posPrev = posPrev;
+    this.tLine = this.cLine;
+    this.tPos = this.cPos;
+
+    if(isIdent) return ident;
 
     assert(/[\(\)]/.test(c));
     return c;
@@ -169,36 +174,85 @@ class Parser{
     }
   }
 
-  err(msg, line=this.linePrev, pos=this.posPrev){
-    this.pa.err(`Error while parsing file ${
-      O.sf(this.file)}\nSyntax error at line ${
-      line} position ${
-      pos}\n${
-      msg}\n\n${
-      O.sanl(this.str)[line - 1]}\n${
-      `${' '.repeat(pos - 1)}^`}`);
+  err(msg, line=this.cLinePrev , pos=this.cPosPrev){
+    assert(typeof line === 'number');
+    assert(typeof pos === 'number');
+
+    this.pa.sErr(msg, this.file, O.sanl(this.str)[line - 1], line, pos);
   }
+
+  errc(msg){ this.err(msg, this.cLinePrev, this.cPosPrev); }
+  errt(msg){ this.err(msg, this.tLinePrev, this.tPosPrev); }
 }
 
 class ListElement extends O.Stringifiable{
-  constructor(parser, line, pos){
+  endLine = null;
+  endPos = null;
+
+  constructor(parser, startLine, startPos){
     super();
 
     this.parser = parser;
-    this.line = line;
-    this.pos = pos;
+    this.startLine = startLine;
+    this.startPos = startPos;
   }
 
-  err(msg){
-    this.parser.err(msg, this.line, this.pos);
+  get isIdent(){ return 0; }
+  get isList(){ return 0; }
+
+  ident(){ O.virtual('ident'); }
+  list(){ O.virtual('list'); }
+  len(){ O.virtual('len'); }
+  type(){ O.virtual('type'); }
+  get fst(){ O.virtual('type'); }
+  get uni(){ O.virtual('type'); }
+
+  lenp(start){ return this.len(start, null); }
+
+  e(i){
+    this.lenp(i + 1);
+    return this.elems[i];
   }
+
+  a(i=0){
+    return this.lenp(i).elems.slice(i);
+  }
+
+  ta(type){
+    return this.type(type).a(1);
+  }
+
+  err(msg, line=this.startLine, pos=this.startPos){
+    this.parser.err(msg, line, pos);
+  }
+
+  errStart(msg){ this.err(msg, this.startLine, this.startPos); }
+  errEnd(msg){ this.err(msg, this.endLine, this.endPos); }
 }
 
 class Identifier extends ListElement{
-  constructor(parser, line, pos, name=null){
-    super(parser, line, pos);
+  constructor(parser, startLine, startPos, name=null){
+    super(parser, startLine, startPos);
     this.name = name;
   }
+
+  get isIdent(){ return 1; }
+
+  ident(name=null){
+    if(name !== null && name !== this.name)
+      this.err(`Expected identifier ${O.sf(name)}, but found ${O.sf(this.name)}`);
+
+    return this;
+  }
+
+  list(){
+    this.err(`Expected a list, but found identifier ${O.sf(this.name)}`);
+  }
+
+  len(){ this.list(); }
+  type(){ this.list(); }
+  get fst(){ this.list(); }
+  get uni(){ this.list(); }
 
   get chNum(){ return 0; }
 
@@ -208,13 +262,50 @@ class Identifier extends ListElement{
 }
 
 class List extends ListElement{
-  constructor(parser, line, pos, elems=[]){
-    super(parser, line, pos);
+  constructor(parser, startLine, startPos, elems=[]){
+    super(parser, startLine, startPos);
     this.elems = elems;
   }
 
   push(elem){
     this.elems.push(elem);
+  }
+
+  get isList(){ return 1; }
+  get isTop(){ return 0; }
+
+  ident(){
+    this.err(`Expected an identifier, but found a list`);
+  }
+
+  list(){ return this; }
+
+  len(start=null, end=start){
+    const {elems} = this;
+    const n = elems.length;
+
+    if(start !== null){
+      if(n < start)
+        this.errEnd(`Expected another element, but found the end of the list`);
+
+      if(end !== null && n > end)
+        elems[start].err(`Superfluous element found in the list`);
+    }
+
+    return this;
+  }
+
+  type(type){
+    this.fst.ident(type);
+    return this;
+  }
+
+  get fst(){
+    return this.e(0);
+  }
+
+  get uni(){
+    return this.len(1).fst;
   }
 
   get chNum(){ return this.elems.length; }
@@ -228,8 +319,31 @@ class List extends ListElement{
   }
 }
 
+class TopList extends List{
+  constructor(parser, elems=[]){
+    super(parser, null, null);
+    this.elems = elems;
+  }
+
+  get isTop(){ return 1; }
+
+  ident(){ assert.fail(); }
+  errStart(){ assert.fail(); }
+
+  errEnd(msg=null){
+    const {elems} = this;
+    const n = elems.length;
+
+    if(n === 0)
+      this.err(msg !== null ? `Unexpected end of the source code` : msg, 1, 1)
+
+    O.last(elems).errEnd(msg !== null ? msg : `Superfluous element found in the list`);
+  }
+}
+
 module.exports = Object.assign(Parser, {
   ListElement,
   Identifier,
   List,
+  TopList,
 });

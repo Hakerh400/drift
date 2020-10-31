@@ -119,6 +119,7 @@ class ProofAssistant{
       `${' '.repeat(pos - 1)}^`}\n\nError: ${
       msg}`);
 
+    log(`${O.sanl(new Error().stack).slice(1).join('\n')}`);
     O.exit();
   }
 

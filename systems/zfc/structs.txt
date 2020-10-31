@@ -1,5 +1,9 @@
 (structs
-  set pred |-
-  ident first next
-  ->
+  (set 1)
+  (pred 1)
+  (|- 1)
+  (ident 1)
+  (first 0)
+  (next 1)
+  (-> 2)
 )

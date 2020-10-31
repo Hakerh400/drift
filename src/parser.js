@@ -254,6 +254,15 @@ class ListElement extends O.Stringifiable{
     return BigInt(s);
   }
 
+  get int(){
+    const s = this.m;
+
+    if(!/^(?:0|\-?[1-9][0-9]*)$/.test(s))
+      this.err(`Expected an integer, but found ${O.sf(s)}`);
+
+    return BigInt(s);
+  }
+
   lenp(start){ return this.len(start, null); }
 
   e(i){
@@ -275,6 +284,31 @@ class ListElement extends O.Stringifiable{
 
   empty(){
     return this.n === 0;
+  }
+
+  type(type){
+    this.fst.ident(type);
+    return this;
+  }
+
+  get fst(){
+    return this.e(0);
+  }
+
+  get snd(){
+    return this.e(1);
+  }
+
+  get last(){
+    return this.e(this.length - 1);
+  }
+
+  get uni(){
+    return this.len(1).fst;
+  }
+
+  get n(){
+    return this.elems.length;
   }
 
   err(msg, line=this.startLine, pos=this.startPos){
@@ -305,10 +339,6 @@ class Identifier extends ListElement{
   }
 
   len(){ this.list(); }
-  type(){ this.list(); }
-  get fst(){ this.list(); }
-  get uni(){ this.list(); }
-  get n(){ this.list(); }
 
   get chNum(){ return 0; }
 
@@ -343,31 +373,14 @@ class List extends ListElement{
     const n = elems.length;
 
     if(start !== null){
-      if(n < start)
-        this.errEnd(`Expected another element, but found the end of the list`);
+      if(n < Number(start))
+        this.errEnd(`Expected an element, but found the end of the list`);
 
-      if(end !== null && n > end)
+      if(end !== null && n > Number(end))
         elems[start].err(`Superfluous element found in the list`);
     }
 
     return this;
-  }
-
-  type(type){
-    this.fst.ident(type);
-    return this;
-  }
-
-  get fst(){
-    return this.e(0);
-  }
-
-  get uni(){
-    return this.len(1).fst;
-  }
-
-  get n(){
-    return this.elems.length;
   }
 
   get chNum(){ return this.elems.length; }

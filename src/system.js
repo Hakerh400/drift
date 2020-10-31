@@ -5,6 +5,7 @@ const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
 const Entity = require('./entity');
+const Parser = require('./parser');
 const NameChecker = require('./name-checker');
 
 const {dataTypesObj, dataTypesArr} = Entity;
@@ -29,6 +30,10 @@ class System{
     this.structsFile = structsFile;
   }
 
+  typeDir(type){
+    return path.join(this.dir, `${type}s`);
+  }
+
   get structs(){
     if(this.#structs === null)
       this.#structs = this.#loadStructs();
@@ -40,13 +45,16 @@ class System{
     const top = this.pa.load(this.structsFile).uni;
     const obj = O.obj();
 
-    top.ta('structs', a => {
-      const name = a.m;
+    top.ta('structs', elem => {
+      elem.len(2);
+
+      const name = elem.fst.m;
+      const arity = elem.snd.nat;
 
       if(name in obj)
-        a.err(`This struct has already been declared`);
+        elem.err(`This struct has already been declared`);
 
-      obj[name] = null;
+      obj[name] = arity;
       return name;
     });
 
@@ -55,6 +63,10 @@ class System{
 
   hasStruct(name){
     return name in this.structs;
+  }
+
+  getStructArity(name){
+    return this.structs[name];
   }
 
   getEntColl(type){
@@ -68,7 +80,7 @@ class System{
   }
 
   #loadEntColl(type){
-    const dir = path.join(this.dir, type);
+    const dir = this.typeDir(type);
     const files = fs.readdirSync(dir);
     const obj = O.obj();
 
@@ -104,14 +116,14 @@ class System{
   }
 
   #loadEnt(type, name){
-    const file = path.join(this.dir, type, `${name}.txt`);
+    const file = path.join(this.typeDir(type), `${name}.txt`);
     const ent = new dataTypesObj[type](this, name, file);
 
     return ent;
   }
 
   getTypeOf(name){
-    let type = null;
+    let type = this.hasStruct(name) ? 'struct' : null;
 
     for(const t of dataTypesArr){
       const coll = this.getEntColl(t);
@@ -119,7 +131,7 @@ class System{
 
       if(type !== null)
         this.getEnt(t, name).err(`${
-          O.sf(name)} has already been declared in ${
+          O.sf(name)} has already been declared as ${
           O.sf(type)}`);
 
       type = t;
@@ -128,13 +140,42 @@ class System{
     return type;
   }
 
+  getInfoOf(name){
+    const type = this.getTypeOf(name);
+    if(type === null) return null;
+
+    let arity;
+
+    switch(type){
+      case 'struct':
+        arity = this.getStructArity(name);
+        break;
+
+      case 'axiom':
+      case 'theorem':
+        const file = path.join(this.typeDir(type), `${name}.txt`);
+        const top = Parser.parse(this, file).uni;
+        arity = BigInt(top.e(2).n);
+        break;
+
+      default:
+        assert.fail(type);
+        break;
+    }
+
+    return [type, arity];
+  }
+
   hasEnt(name){
     return this.getTypeOf(name, 0) === null;
   }
 
   verifyTheorem(name){
     const th = this.getEnt(name);
-    log(th);
+
+    for(const step of th.stepsArr){
+      O.exit(step.elem+'');
+    }
   }
 
   err(msg){

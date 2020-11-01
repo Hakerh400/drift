@@ -116,23 +116,22 @@ class SimpleEntity extends Entity{
 
   parseExpr(elem, formal){
     const parseExpr = function*(elem){
-      const {fst} = elem;
-
-      if(fst.v){
-        const ident = fst.uni;
-        const varName = ident.m;
+      if(elem.s){
+        const varName = elem.m;
 
         if(this.hasVar(varName))
           return this.getVar(varName);
 
         if(!formal)
-          ident.err(`Undefined variable ${O.sf(varName)}`);
+          elem.err(`Undefined variable ${O.sf(varName)}`);
 
         const vari = new VariableExpression(elem, varName);
         this.addVar(vari);
 
         return vari;
       }
+
+      const {fst} = elem;
 
       const name = fst.m;
       const args = elem.a(1);

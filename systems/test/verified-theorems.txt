@@ -9,8 +9,8 @@
   impl-r4
   impl-reord
   impl-mid
+  impl-r2n
   impl-r3
-  impl-rn2
   mpp
   impl-t1-d
   impl-tr-inv-d

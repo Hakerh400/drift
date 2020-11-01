@@ -1,4 +1,4 @@
-(theorem impl-tr-d ((pred ((a))) (pred ((b))) (pred ((c))))
-  (1 (impl-tr-inv-d (1) (2) (3)) (|- (-> (-> ((b)) ((c))) (-> (-> ((a)) ((b))) (-> ((a)) ((c)))))))
-  (2 (impl-reord 1)              (|- (-> (-> ((a)) ((b))) (-> (-> ((b)) ((c))) (-> ((a)) ((c)))))))
+(theorem impl-tr-d ((pred a) (pred b) (pred c))
+  (1 (impl-tr-inv-d (1) (2) (3)) (|- (-> (-> b c) (-> (-> a b) (-> a c)))))
+  (2 (impl-reord 1)              (|- (-> (-> a b) (-> (-> b c) (-> a c)))))
 )

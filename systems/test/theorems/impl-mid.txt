@@ -1,4 +1,4 @@
-(theorem impl-mid ((|- (-> ((a)) ((b)))) (pred ((c))))
-  (1 (impl-r1 (1) (2)) (|- (-> ((c)) (-> ((a)) ((b))))))
-  (2 (impl-reord 1)    (|- (-> ((a)) (-> ((c)) ((b))))))
+(theorem impl-mid ((|- (-> a b)) (pred c))
+  (1 (impl-r1 (1) (2)) (|- (-> c (-> a b))))
+  (2 (impl-reord 1)    (|- (-> a (-> c b))))
 )

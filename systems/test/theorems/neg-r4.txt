@@ -1,0 +1,5 @@
+(theorem neg-r4 ((|- a))
+  (1 (wff-infer-elim (1)) (pred a))
+  (2 (neg-r4-d 1)         (|- (-> a (~ (~ a)))))
+  (3 (mp 2 (1))           (|- (~ (~ a))))
+)

@@ -193,7 +193,7 @@ class SimpleEntity extends Entity{
           return new SystemError(`Cannot assert that struct\n\n${
             lhs.elem}\n\nfrom ${
             this.typeStr} ${
-            O.sf(this.name)} is equal to uninterpreted variable ${
+            O.sf(this.name)} is equal to variable ${
             O.sf(rhs.name)}${
             th !== null ? ` from theorem ${O.sf(th.name)}` : ''}`);
 

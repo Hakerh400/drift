@@ -2,4 +2,5 @@
   (1 (wff-infer-elim (1)) (pred a))
   (2 (wff-infer-elim (2)) (pred b))
   (3 (ax-sl-ak 2 1)       (|- (-> b (-> a b))))
+  (4 (mp 3 (2))           (|- (-> a b)))
 )

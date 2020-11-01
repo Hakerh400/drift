@@ -1,0 +1,7 @@
+(theorem neg-r3 ((|- (~ (~ a))))
+  (1 (wff-infer-elim (1)) (pred (~ (~ a))))
+  (2 (wff-neg-elim 1)     (pred (~ a)))
+  (3 (wff-neg-elim 2)     (pred a))
+  (4 (neg-r3-d 3)         (|- (-> (~ (~ a)) a)))
+  (5 (mp 4 (1))           (|- a))
+)

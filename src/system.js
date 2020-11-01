@@ -14,6 +14,7 @@ const {dataTypesObj, dataTypesArr} = Entity;
 
 class System{
   #structs = null;
+  #verifiedTheorems = null;
   #dataColls = O.arr2obj(dataTypesArr, null);
 
   constructor(pa, name){
@@ -24,12 +25,14 @@ class System{
     pa.md(dir);
 
     const structsFile = path.join(dir, 'structs.txt');
+    if(pa.nexi(structsFile)) pa.save(structsFile, [['structs']]);
 
-    if(pa.nexi(structsFile))
-      pa.save(structsFile, [['structs']]);
+    const verifiedTheoremsFile = path.join(dir, 'verified-theorems.txt');
+    if(pa.nexi(verifiedTheoremsFile)) pa.save(verifiedTheoremsFile, [['verified-theorems']]);
 
     this.dir = dir;
     this.structsFile = structsFile;
+    this.verifiedTheoremsFile = verifiedTheoremsFile;
   }
 
   typeDir(type){
@@ -65,6 +68,24 @@ class System{
 
   hasStruct(name){
     return name in this.structs;
+  }
+
+  get verifiedTheorems(){
+    if(this.#verifiedTheorems === null)
+      this.#verifiedTheorems = this.#loadVerifiedTheorems();
+
+    return this.#verifiedTheorems;
+  }
+
+  #loadVerifiedTheorems(){
+    const top = this.pa.load(this.verifiedTheoremsFile).uni;
+    const obj = O.obj();
+
+    top.ta('verified-theorems', elem => {
+      obj[elem.m] = 1;
+    });
+
+    return obj;
   }
 
   getStructArity(name){
@@ -112,7 +133,7 @@ class System{
         O.sf(name)} of type ${
         O.sf(type)} is not found`);
 
-    if(coll[name] === null);
+    if(coll[name] === null)
       coll[name] = this.#loadEnt(type, name);
 
     return coll[name];
@@ -173,36 +194,116 @@ class System{
     return this.getTypeOf(name, 0) === null;
   }
 
+  isTheoremVerified(name){
+    return name in this.verifiedTheorems;
+  }
+
   verifyTheorem(name){
+    if(this.isTheoremVerified(name)) return;
+
     const {pa} = this;
-    const th = this.getEnt(name);
+    const seen = new Set();
+    const stack = [];
 
-    const thrw = (step, msg) => {
-      const err = new SystemError(`Error in step ${
-        O.sf(step.name)} from theorem ${
-        O.sf(name)}\n${
-        msg instanceof SystemError ? msg.msg : msg}`);
+    const verify = function*(th){
+      const {name} = th;
 
-      err.throw(this.pa);
-    };
+      stack.push(th);
+      seen.add(th);
 
-    for(const step of th.stepsArr){
-      const {inv, expr} = step;
+      const thrw = (step, msg) => {
+        const err = new SystemError(`Error in step ${
+          O.sf(step.name)} of theorem ${
+          O.sf(name)}\n${
+          msg instanceof SystemError ? msg.msg : msg}`);
 
-      const invEnt = this.getEnt(inv.name);
-      const vars = invEnt.matchVars(inv.argExprs, th);
-      if(vars instanceof SystemError) thrw(step, vars);
+        err.throw(this.pa);
+      };
 
-      const expected = invEnt.result.subst(vars);
-      const actual = step.expr;
+      for(const step of th.stepsArr){
+        const {inv, expr} = step;
+        const {name} = inv;
+        const invEnt = this.getEnt(name);
 
-      if(!actual.eq(expected))
-        thrw(step, `Resulting expressions do not match\n\n${
-          'Expected:'.padEnd(9)} ${
-          expected.elem}\n${
-          'Actual:'.padEnd(9)} ${
-          actual.elem}`);
+        let expected = null;
+        const actual = step.expr;
+
+        calcResultingExpr: {
+          const type = th.getRefType(name);
+
+          const calcSimpleExpr = () => {
+            const vars = invEnt.matchVars(inv.argExprs, th);
+            if(vars instanceof SystemError) thrw(step, vars);
+
+            return invEnt.result.subst(vars);
+          };
+
+          if(type === 'axiom'){
+            expected = calcSimpleExpr();
+            break calcResultingExpr;
+          }
+
+          if(type === 'theorem'){
+            if(!this.isTheoremVerified(name)){
+              const th = this.getEnt(name);
+
+              if(seen.has(th))
+                inv.elem.fst.err(`Cyclic theorem dependence:\n\n${
+                  stack.map(a => a.name).join('\n')}\n`);
+
+              yield [verify, th];
+            }
+
+            expected = calcSimpleExpr();
+            break calcResultingExpr;
+          }
+
+          assert.fail(type);
+        }
+
+        if(!actual.eq(expected))
+          thrw(step, `Resulting expressions do not match\n\n${
+            'Expected:'.padEnd(9)} ${
+            expected.elem}\n${
+            'Actual:'.padEnd(9)} ${
+            actual.elem}`);
+      }
+
+      this.declareTheoremAsVerified(name);
+      stack.pop();
+    }.bind(this);
+
+    O.rec(verify, this.getEnt(name));
+  }
+
+  verifyAllTheorems(){
+    this.clearVerifiedTheorems();
+
+    const names = this.getEntColl('theorem');
+    
+    for(const name in names){
+      log(name);
+      this.verifyTheorem(name);
     }
+  }
+
+  declareTheoremAsVerified(name){
+    const {verifiedTheorems} = this;
+
+    verifiedTheorems[name] = 1;
+    this.saveVerifiedTheorems();
+  }
+
+  clearVerifiedTheorems(){
+    this.#verifiedTheorems = O.obj();
+    this.saveVerifiedTheorems();
+  }
+
+  saveVerifiedTheorems(){
+    this.pa.save(
+      this.verifiedTheoremsFile,
+      [['verified-theorems', 1, ...O.keys(this.verifiedTheorems)]],
+    );
   }
 
   err(msg){

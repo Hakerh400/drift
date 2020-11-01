@@ -1,0 +1,3 @@
+(axiom wff-impl-intr ((pred ((a))) (pred ((b))))
+  (pred (-> ((a)) ((b))))
+)

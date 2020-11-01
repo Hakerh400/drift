@@ -397,13 +397,13 @@ class List extends ListElement{
       if(spacingType !== 0 && i === spacingStart)
         arr.push(this.inc);
 
-      if(i !== 0)
-        arr.push(spacings[i >= spacingStart ? spacingType : 0]);
+      const spType = i >= spacingStart ? spacingType : 0;
+      if(spType !== 0 || i !== 0) arr.push(spacings[spType]);
 
       arr.push(e);
     });
 
-    if(spacingType !== 0 && elems.length >= spacingStart)
+    if(spacingType !== 0 && elems.length > spacingStart)
       arr.push(this.dec, '\n');
 
     arr.push(')');

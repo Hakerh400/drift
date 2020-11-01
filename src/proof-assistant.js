@@ -101,13 +101,10 @@ class ProofAssistant{
     if(name in systems)
       this.err(`System ${O.sf(name)} already exists`);
 
-    this.save(this.systemsInfoFile, [['systems', 1,
-      ...O.keys(systems),
-      name,
-    ]]);
-
     const system = new System(this, name);
+
     systems[name] = system;
+    this.save(this.systemsInfoFile, [['systems', 1, ...O.keys(systems)]]);
 
     return system;
   }

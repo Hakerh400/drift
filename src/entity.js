@@ -54,6 +54,9 @@ class Entity{
     this.refs[name] = info;
   }
 
+  getRefType(name){ return this.getRef(name)[0]; }
+  getRefArity(name){ return this.getRef(name)[1]; }
+
   getInfoOf(elem, name, addRef=1){
     const info = this.system.getInfoOf(name);
 
@@ -112,8 +115,6 @@ class SimpleEntity extends Entity{
   }
 
   parseExpr(elem, formal){
-    const self = this;
-
     const parseExpr = function*(elem){
       const {fst} = elem;
 
@@ -121,27 +122,27 @@ class SimpleEntity extends Entity{
         const ident = fst.uni;
         const varName = ident.m;
 
-        if(self.hasVar(varName))
-          return self.getVar(varName);
+        if(this.hasVar(varName))
+          return this.getVar(varName);
 
         if(!formal)
           ident.err(`Undefined variable ${O.sf(varName)}`);
 
         const vari = new VariableExpression(elem, varName);
-        self.addVar(vari);
+        this.addVar(vari);
 
         return vari;
       }
 
       const name = fst.m;
       const args = elem.a(1);
-      const [type, arity] = self.getInfoOf(fst, name);
+      const [type, arity] = this.getInfoOf(fst, name);
 
       if(type === null)
         fst.err(`Unknown entity ${O.sf(name)}`);
 
       if(!isExprType(type))
-        self.typeErr(fst, name, type);
+        this.typeErr(fst, name, type);
 
       elem.len(arity + 1n);
 
@@ -155,7 +156,7 @@ class SimpleEntity extends Entity{
       //   return new FunctionExpression(elem, name, args);
 
       assert.fail();
-    }
+    }.bind(this);
 
     return O.rec(parseExpr, elem);
   }
@@ -279,7 +280,7 @@ class Theorem extends SimpleEntity{
       }
 
       if(seen.size !== steps.length){
-        for(const step in this.stepsArr){
+        for(const step of this.stepsArr){
           if(seen.has(step)) continue;
 
           const {fst} = step.elem;
@@ -433,7 +434,7 @@ class Expression extends Constituent{
 
         const elemNew = new List([
           new Identifier(expr.name),
-          new List(args.map(a => a.elem)),
+          ...args.map(a => a.elem),
         ]);
 
         return new StructExpression(elemNew, expr.name, args);

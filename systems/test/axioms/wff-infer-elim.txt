@@ -1,0 +1,3 @@
+(axiom wff-infer-elim ((|- ((a))))
+  (pred ((a)))
+)

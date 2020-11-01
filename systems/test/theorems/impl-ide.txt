@@ -1,0 +1,4 @@
+(theorem impl-ide ((|- ((a))))
+  (1 (wff-infer-elim (1)) (pred ((a))))
+  (6 (impl-refl 1)        (|- (-> ((a)) ((a)))))
+)

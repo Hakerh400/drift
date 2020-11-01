@@ -70,8 +70,6 @@ class SimpleEntity extends Entity{
   args = [];
   result = null;
 
-  boundParseExprRec = this.parseExprRec.bind(this);
-
   constructor(system, name, file){
     super(system, name, file);
 
@@ -85,61 +83,80 @@ class SimpleEntity extends Entity{
 
   get arity(){ return this.args.length; }
 
+  hasVar(name){ return name in this.vars; }
+  getVar(name){ return this.vars[name]; }
+  addVar(vari){ this.vars[vari.name] = vari; }
+
   parseArg(elem){
     return this.parseExpr(elem, 1);
   }
 
   parseExpr(elem, formal){
-    return O.rec(this.boundParseExprRec, elem, formal);
-  }
+    const self = this;
 
-  *parseExprRec(elem, formal=0){
-    const {boundParseExprRec} = this;
-    const {fst} = elem;
+    const parseExpr = function*(elem){
+      const {fst} = elem;
 
-    if(fst.v){
-      const ident = fst.uni;
-      const varName = ident.m;
+      if(fst.v){
+        const ident = fst.uni;
+        const varName = ident.m;
 
-      if(this.hasVar(varName))
-        return this.getVar(varName);
+        if(self.hasVar(varName))
+          return self.getVar(varName);
 
-      if(!formal)
-        ident.err(`Undefined variable ${O.sf(varName)}`);
+        if(!formal)
+          ident.err(`Undefined variable ${O.sf(varName)}`);
 
-      const vari = new VariableExpression(elem, varName);
-      this.addVar(vari);
+        const vari = new VariableExpression(elem, varName);
+        self.addVar(vari);
 
-      return vari;
+        return vari;
+      }
+
+      const name = fst.m;
+      const args = elem.a(1);
+      const [type, arity] = self.getInfoOf(fst, name);
+
+      if(type === null)
+        fst.err(`Unknown entity ${O.sf(name)}`);
+
+      if(!isExprType(type))
+        self.typeErr(fst, name, type);
+
+      elem.len(arity + 1n);
+
+      for(let i = 0; i !== args.length; i++)
+        args[i] = yield [parseExpr, args[i]];
+
+      if(type === 'struct')
+        return new StructExpression(elem, name, args);
+
+      // if(type === 'func')
+      //   return new FunctionExpression(elem, name, args);
+
+      assert.fail();
     }
 
-    const name = fst.m;
-    const args = elem.a(1);
-    const [type, arity] = this.getInfoOf(fst, name);
-
-    if(type === null)
-      fst.err(`Unknown entity ${O.sf(name)}`);
-
-    if(!isExprType(type))
-      this.typeErr(fst, name, type);
-
-    elem.len(arity + 1n);
-
-    for(let i = 0; i !== args.length; i++)
-      args[i] = yield[boundParseExprRec, args[i], formal];
-
-    if(type === 'struct')
-      return new StructExpression(elem, name, args);
-
-    if(type === 'func')
-      return new FunctionExpression(elem, name, args);
-
-    assert.fail();
+    return O.rec(parseExpr, elem);
   }
 
-  hasVar(name){ return name in this.vars; }
-  getVar(name){ return this.vars[name]; }
-  addVar(vari){ this.vars[vari.name] = vari; }
+  matchVars(args){
+    const vars = new Set();
+    const eqs = [];
+
+    const push = (a, b) => {
+      if(a.cmp(b) <= 0) eqs.push([a, b]);
+      else eqs.push([b, a]);
+    };
+
+    args.forEach((a, i) => push(this.args[i], a));
+
+    while(eqs.length !== 0){
+      const [lhs, rhs] = eqs.pop();
+
+      
+    }
+  }
 }
 
 class Axiom extends SimpleEntity{
@@ -291,9 +308,34 @@ class Invocation extends Constituent{
 }
 
 class Expression extends Constituent{
+  get pri(){ O.virtual('pri'); }
+  cmp(other){ this.pri - pther.pri; }
+
   get isStruct(){ return 0; }
   get isFunc(){ return 0; }
   get isVar(){ return 0; }
+
+  subst(vars){
+    const subst = function*(expr){
+      if(expr instanceof StructExpression){
+        const args = [];
+
+        for(const arg of expr.args)
+          args.push(yield [subst, arg]);
+
+        return new StructExpression(null, expr.name, args);
+      }
+
+      if(expr instanceof VariableExpression){
+        assert(vars.has(expr));
+        return vars.get(expr);
+      }
+
+      assert.fail(expr);
+    };
+
+    return O.rec(subst, this);
+  }
 }
 
 class StructExpression extends Expression{
@@ -304,8 +346,11 @@ class StructExpression extends Expression{
     this.elems = elems;
   }
 
-  push(elem){ this.elems.push(elem); }
+  get pri(){ return 1; }
+
   get isStruct(){ return 1; }
+
+  push(elem){ this.elems.push(elem); }
 }
 
 class FunctionExpression extends Expression{
@@ -316,8 +361,9 @@ class FunctionExpression extends Expression{
     this.elems = elems;
   }
 
-  push(elem){ this.elems.push(elem); }
   get isFunc(){ return 1; }
+
+  push(elem){ this.elems.push(elem); }
 }
 
 class VariableExpression extends Expression{
@@ -326,6 +372,8 @@ class VariableExpression extends Expression{
 
     this.name = name;
   }
+
+  get pri(){ return 0; }
 
   get isVar(){ return 1; }
 }

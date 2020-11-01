@@ -105,9 +105,10 @@ class System{
 
     const coll = this.getEntColl(type);
 
-    if(!(name in coll)){
-      this.err('')
-    }
+    if(!(name in coll))
+      this.err(`Entity ${
+        O.sf(name)} of type ${
+        O.sf(type)} is not found`);
 
     if(coll[name] === null);
       coll[name] = this.#loadEnt(type, name);
@@ -174,7 +175,10 @@ class System{
     const th = this.getEnt(name);
 
     for(const step of th.stepsArr){
-      O.exit(step.elem+'');
+      const {inv, expr} = step;
+      
+      const invEnt = this.getEnt(inv.name);
+      const vars = new Set();
     }
   }
 

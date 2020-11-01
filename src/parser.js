@@ -5,6 +5,12 @@ const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
 
+const spacings = [
+  ' ',
+  '\n',
+  '\n\n',
+];
+
 class Parser{
   static parse(pa, file){
     return new Parser(pa, file).parse();
@@ -185,38 +191,27 @@ class Parser{
 }
 
 class ListElement extends O.Stringifiable{
-  static from(e, top=0){
+  static from(e, top){
     const s = a => typeof a === 'string';
 
-    if(s(e))
-      return new Identifier(e);
+    const from = function*(e, top=0){
+      if(s(e)) return new Identifier(e);
 
-    const topElem = top ? new TopList() : new List();
-    const stack = [[e, topElem]];
+      const list = top ? new TopList() : new List();
 
-    while(stack.length !== 0){
-      const frame = O.last(stack);
-      const [arr, elem] = frame;
-      const i = elem.n;
+      for(const arg of e){
+        if(typeof arg === 'number'){
+          list.setsp(arg, list.n);
+          continue;
+        }
 
-      if(arr.length === i){
-        stack.pop();
-        continue;
+        list.push(yield [from, arg]);
       }
 
-      const e = arr[i];
+      return list;
+    };
 
-      if(s(e)){
-        elem.push(new Identifier(e));
-        continue;
-      }
-
-      const elem1 = new List();
-      elem.push(elem1);
-      stack.push([e, elem1]);
-    }
-
-    return topElem;
+    return O.rec(from, e, top);
   }
 
   endLine = null;
@@ -348,6 +343,9 @@ class Identifier extends ListElement{
 }
 
 class List extends ListElement{
+  spacingType = 0;
+  spacingStart = 1;
+
   constructor(elems=null, parser, startLine, startPos){
     super(parser, startLine, startPos);
 
@@ -386,10 +384,30 @@ class List extends ListElement{
   get chNum(){ return this.elems.length; }
   getCh(i){ return this.elems[i]; }
 
+  setsp(spacingType=0, spacingStart=1){
+    this.spacingType = spacingType;
+    this.spacingStart = spacingStart;
+  }
+
   toStr(){
+    const {elems, spacingType, spacingStart} = this;
     const arr = ['('];
-    this.join(arr, this.elems, ' ');
+
+    elems.forEach((e, i) => {
+      if(spacingType !== 0 && i === spacingStart)
+        arr.push(this.inc);
+
+      if(i !== 0)
+        arr.push(spacings[i >= spacingStart ? spacingType : 0]);
+
+      arr.push(e);
+    });
+
+    if(spacingType !== 0 && elems.length >= spacingStart)
+      arr.push(this.dec, '\n');
+
     arr.push(')');
+
     return arr;
   }
 }
@@ -412,6 +430,8 @@ class TopList extends List{
 }
 
 module.exports = Object.assign(Parser, {
+  spacings,
+
   ListElement,
   Identifier,
   List,

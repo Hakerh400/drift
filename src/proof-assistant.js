@@ -23,7 +23,7 @@ class ProofAssistant{
 
     this.path = pth;
     this.systemsDir = path.join(pth, 'systems');
-    this.systemsInfoFile = path.join(this.systemsDir, 'info.txt');
+    this.systemsInfoFile = path.join(this.systemsDir, 'systems.txt');
 
     if(!this.md(this.systemsDir))
       O.wfs(this.systemsInfoFile, '(systems)');
@@ -101,7 +101,10 @@ class ProofAssistant{
     if(name in systems)
       this.err(`System ${O.sf(name)} already exists`);
 
-    this.save(this.systemsInfoFile, [['systems', ...systems, name]]);
+    this.save(this.systemsInfoFile, [['systems', 1,
+      ...O.keys(systems),
+      name,
+    ]]);
 
     const system = new System(this, name);
     systems[name] = system;

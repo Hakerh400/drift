@@ -4,9 +4,13 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
+const {ArrayList} = require('@hakerh400/list');
 const Parser = require('./parser');
 const NameChecker = require('./name-checker');
 const SystemError = require('./system-error');
+const debug = require('./debug');
+
+const {Identifier, List} = Parser;
 
 const isExprType = type => {
   return type === 'struct' || type === 'func';
@@ -32,6 +36,9 @@ class Entity{
 
     this.top = Parser.parse(system.pa, file).uni;
   }
+
+  static get typeStr(){ O.virtual('typeStr'); }
+  get typeStr(){ return this.constructor.typeStr; }
 
   get arity(){ O.virtual('arity'); }
 
@@ -69,6 +76,7 @@ class Entity{
 }
 
 class Function extends Entity{
+  static get typeStr(){ return 'function'; }
   get isFunc(){ return 1; }
 }
 
@@ -156,11 +164,12 @@ class SimpleEntity extends Entity{
     assert(args.length === this.args.length);
 
     const vars = new Map();
-    const eqs = [];
+    const eqs = new ArrayList();
 
     args.forEach((a, i) => eqs.push([this.args[i], a]));
 
     while(eqs.length !== 0){
+      debugger;
       const [lhs, rhs] = eqs.pop();
 
       if(lhs instanceof VariableExpression){
@@ -173,7 +182,7 @@ class SimpleEntity extends Entity{
           return new SystemError(`Variable ${
             O.sf(lhs.name)} from ${
             O.sf(this.name)} has already been determined to be\n\n${
-            lhs.elem}\n\nso it cannot be\n\n${
+            vars.get(lhs).elem}\n\nso it cannot be\n\n${
             rhs.elem}`);
 
         continue;
@@ -182,14 +191,17 @@ class SimpleEntity extends Entity{
       if(lhs instanceof StructExpression){
         if(rhs instanceof VariableExpression)
           return new SystemError(`Cannot assert that struct\n\n${
-            lhs}\n\nis equal to uninterpreted variable ${
+            lhs.elem}\n\nfrom ${
+            this.typeStr} ${
+            O.sf(this.name)} is equal to uninterpreted variable ${
             O.sf(rhs.name)}${
             th !== null ? ` from theorem ${O.sf(th.name)}` : ''}`);
 
         if(rhs instanceof StructExpression){
-          if(lhs.name !== rhs.name) return new SystemError(`Struct\n\n${
-            lhs.elem}\n\ncannot be equal to\n\n${
-            rhs.elem}\n\nbecause their names differ`);
+          if(lhs.name !== rhs.name)
+            return new SystemError(`Struct\n\n${
+              lhs.elem}\n\ncannot be equal to\n\n${
+              rhs.elem}\n\nbecause their names differ`);
 
           const args1 = lhs.args;
           const args2 = rhs.args;
@@ -212,6 +224,8 @@ class SimpleEntity extends Entity{
 }
 
 class Axiom extends SimpleEntity{
+  static get typeStr(){ return 'axiom'; }
+
   constructor(system, name, file){
     super(system, name, file);
 
@@ -232,7 +246,7 @@ class Theorem extends SimpleEntity{
 
     const {top} = this;
 
-    top.type('theorem');
+    top.type(this.typeStr);
 
     const steps = top.lenp(4).a(3);
     let lastStep = null;
@@ -276,6 +290,8 @@ class Theorem extends SimpleEntity{
 
     this.result = lastStep.expr;
   }
+
+  static get typeStr(){ return 'theorem'; }
 
   hasStep(name){ return name in this.stepsObj; }
   getStep(name){ return this.stepsObj[name]; }
@@ -415,7 +431,12 @@ class Expression extends Constituent{
         for(const arg of expr.args)
           args.push(yield [subst, arg]);
 
-        return new StructExpression(null, expr.name, args);
+        const elemNew = new List([
+          new Identifier(expr.name),
+          new List(args.map(a => a.elem)),
+        ]);
+
+        return new StructExpression(elemNew, expr.name, args);
       }
 
       assert.fail(expr);
@@ -490,15 +511,24 @@ class TheoremStepRef extends TheoremRef{
   }
 }
 
-const dataTypesObj = {
-  'func': Function,
-  'axiom': Axiom,
-  'theorem': Theorem,
-};
+const entClasses = [
+  Function,
+  Axiom,
+  Theorem,
+];
 
-const dataTypesArr = O.keys(dataTypesObj);
+const dataTypesObj = O.obj();
+const dataTypesArr = [];
+
+for(const entc of entClasses){
+  const {typeStr} = entc;
+
+  dataTypesObj[typeStr] = entc;
+  dataTypesArr.push(typeStr);
+}
 
 module.exports = Object.assign(Entity, {
+  entClasses,
   dataTypesObj,
   dataTypesArr,
 

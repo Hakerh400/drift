@@ -8,6 +8,7 @@ const Entity = require('./entity');
 const Parser = require('./parser');
 const NameChecker = require('./name-checker');
 const SystemError = require('./system-error');
+const debug = require('./debug');
 
 const {dataTypesObj, dataTypesArr} = Entity;
 
@@ -176,15 +177,31 @@ class System{
     const {pa} = this;
     const th = this.getEnt(name);
 
+    const thrw = (step, msg) => {
+      const err = new SystemError(`Error in step ${
+        O.sf(step.name)} from theorem ${
+        O.sf(name)}\n${
+        msg instanceof SystemError ? msg.msg : msg}`);
+
+      err.throw(this.pa);
+    };
+
     for(const step of th.stepsArr){
       const {inv, expr} = step;
 
       const invEnt = this.getEnt(inv.name);
       const vars = invEnt.matchVars(inv.argExprs, th);
-      if(vars instanceof SystemError) vars.throw(pa);
+      if(vars instanceof SystemError) thrw(step, vars);
 
-      log(Entity.varsMap2str(vars));
-      O.exit();
+      const expected = invEnt.result.subst(vars);
+      const actual = step.expr;
+
+      if(!actual.eq(expected))
+        thrw(step, `Resulting expressions do not match\n\n${
+          'Expected:'.padEnd(9)} ${
+          expected.elem}\n${
+          'Actual:'.padEnd(9)} ${
+          actual.elem}`);
     }
   }
 

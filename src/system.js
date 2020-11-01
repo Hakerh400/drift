@@ -7,6 +7,7 @@ const O = require('omikron');
 const Entity = require('./entity');
 const Parser = require('./parser');
 const NameChecker = require('./name-checker');
+const SystemError = require('./system-error');
 
 const {dataTypesObj, dataTypesArr} = Entity;
 
@@ -172,13 +173,18 @@ class System{
   }
 
   verifyTheorem(name){
+    const {pa} = this;
     const th = this.getEnt(name);
 
     for(const step of th.stepsArr){
       const {inv, expr} = step;
-      
+
       const invEnt = this.getEnt(inv.name);
-      const vars = new Set();
+      const vars = invEnt.matchVars(inv.argExprs, th);
+      if(vars instanceof SystemError) vars.throw(pa);
+
+      log(Entity.varsMap2str(vars));
+      O.exit();
     }
   }
 

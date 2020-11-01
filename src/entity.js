@@ -6,6 +6,7 @@ const assert = require('assert');
 const O = require('omikron');
 const Parser = require('./parser');
 const NameChecker = require('./name-checker');
+const SystemError = require('./system-error');
 
 const isExprType = type => {
   return type === 'struct' || type === 'func';
@@ -13,6 +14,12 @@ const isExprType = type => {
 
 const isInvType = type => {
   return type === 'axiom' || type === 'theorem';
+};
+
+const varsMap2str = vars => {
+  return `(\n${[...vars].map(([a, b]) => {
+    return `${' '.repeat(2)}${a.name}: ${b.elem}`;
+  }).join('\n')}\n)`;
 };
 
 class Entity{
@@ -67,6 +74,7 @@ class Function extends Entity{
 
 class SimpleEntity extends Entity{
   vars = O.obj();
+  varSet = new Set();
   args = [];
   result = null;
 
@@ -85,7 +93,11 @@ class SimpleEntity extends Entity{
 
   hasVar(name){ return name in this.vars; }
   getVar(name){ return this.vars[name]; }
-  addVar(vari){ this.vars[vari.name] = vari; }
+
+  addVar(vari){
+    this.vars[vari.name] = vari;
+    this.varSet.add(vari);
+  }
 
   parseArg(elem){
     return this.parseExpr(elem, 1);
@@ -140,22 +152,62 @@ class SimpleEntity extends Entity{
     return O.rec(parseExpr, elem);
   }
 
-  matchVars(args){
-    const vars = new Set();
+  matchVars(args, th=null){
+    assert(args.length === this.args.length);
+
+    const vars = new Map();
     const eqs = [];
 
-    const push = (a, b) => {
-      if(a.cmp(b) <= 0) eqs.push([a, b]);
-      else eqs.push([b, a]);
-    };
-
-    args.forEach((a, i) => push(this.args[i], a));
+    args.forEach((a, i) => eqs.push([this.args[i], a]));
 
     while(eqs.length !== 0){
       const [lhs, rhs] = eqs.pop();
 
-      
+      if(lhs instanceof VariableExpression){
+        if(!vars.has(lhs)){
+          vars.set(lhs, rhs);
+          continue;
+        }
+
+        if(!vars.get(lhs).eq(rhs))
+          return new SystemError(`Variable ${
+            O.sf(lhs.name)} from ${
+            O.sf(this.name)} has already been determined to be\n\n${
+            lhs.elem}\n\nso it cannot be\n\n${
+            rhs.elem}`);
+
+        continue;
+      }
+
+      if(lhs instanceof StructExpression){
+        if(rhs instanceof VariableExpression)
+          return new SystemError(`Cannot assert that struct\n\n${
+            lhs}\n\nis equal to uninterpreted variable ${
+            O.sf(rhs.name)}${
+            th !== null ? ` from theorem ${O.sf(th.name)}` : ''}`);
+
+        if(rhs instanceof StructExpression){
+          if(lhs.name !== rhs.name) return new SystemError(`Struct\n\n${
+            lhs.elem}\n\ncannot be equal to\n\n${
+            rhs.elem}\n\nbecause their names differ`);
+
+          const args1 = lhs.args;
+          const args2 = rhs.args;
+          assert(args1.length === args2.length);
+
+          for(let i = 0; i !== args1.length; i++)
+            eqs.push([args1[i], args2[i]]);
+
+          continue;
+        }
+        
+        assert.fail(rhs?.constructor?.name);
+      }
+
+      assert.fail(lhs?.constructor?.name);
     }
+
+    return vars;
   }
 }
 
@@ -200,13 +252,15 @@ class Theorem extends SimpleEntity{
         const {args} = step.inv;
 
         for(const arg of args){
-          if(arg instanceof Expression) continue;
+          if(arg instanceof TheoremArgumentRef) continue;
 
-          assert(arg instanceof Step);
-          if(seen.has(arg)) continue;
+          assert(arg instanceof TheoremStepRef);
 
-          seen.add(arg);
-          stack.push(arg);
+          const {step} = arg;
+          if(seen.has(step)) continue;
+
+          seen.add(step);
+          stack.push(step);
         }
       }
 
@@ -264,7 +318,8 @@ class Theorem extends SimpleEntity{
         if(index === 0n || index > BigInt(this.args.length))
           num.err(`Undefined argument index ${index}`);
 
-        return this.args[Number(index) - 1];
+        const n = Number(index) - 1;
+        return new TheoremArgumentRef(this.args[n], n);
       }
 
       const name = elem.m;
@@ -272,7 +327,7 @@ class Theorem extends SimpleEntity{
       if(!this.hasStep(elem.m))
         elem.err(`Undefined step ${O.sf(name)}`);
 
-      return this.getStep(name);
+      return new TheoremStepRef(this.getStep(name));
     });
 
     return new Invocation(elem, name, args);
@@ -305,18 +360,55 @@ class Invocation extends Constituent{
     this.name = name;
     this.args = args;
   }
+
+  get argExprs(){
+    return this.args.map(a => a.expr);
+  }
 }
 
 class Expression extends Constituent{
-  get pri(){ O.virtual('pri'); }
-  cmp(other){ this.pri - pther.pri; }
-
   get isStruct(){ return 0; }
   get isFunc(){ return 0; }
   get isVar(){ return 0; }
 
+  eq(other){
+    const eq = function*(expr1, expr2){
+      if(expr1 === expr2) return 1;
+
+      const ctor1 = expr1.constructor;
+      const ctor2 = expr2.constructor;
+      if(ctor1 !== ctor2) return 0;
+
+      if(expr1 instanceof VariableExpression){
+        return expr1.name === expr2.name;
+      }
+
+      if(expr1 instanceof StructExpression){
+        if(expr1.name !== expr2.name) return 0;
+
+        const args1 = expr1.args;
+        const args2 = expr2.args;
+        assert(args1.length === args2.length);
+
+        for(let i = 0; i !== args1.length; i++)
+          if(!(yield [eq, args1[i], args2[i]])) return 0;
+
+        return 1;
+      }
+
+      assert.fail(ctor1?.name);
+    };
+
+    return O.rec(eq, this, other);
+  }
+
   subst(vars){
     const subst = function*(expr){
+      if(expr instanceof VariableExpression){
+        assert(vars.has(expr));
+        return vars.get(expr);
+      }
+
       if(expr instanceof StructExpression){
         const args = [];
 
@@ -324,11 +416,6 @@ class Expression extends Constituent{
           args.push(yield [subst, arg]);
 
         return new StructExpression(null, expr.name, args);
-      }
-
-      if(expr instanceof VariableExpression){
-        assert(vars.has(expr));
-        return vars.get(expr);
       }
 
       assert.fail(expr);
@@ -339,31 +426,29 @@ class Expression extends Constituent{
 }
 
 class StructExpression extends Expression{
-  constructor(elem, name, elems=[]){
+  constructor(elem, name, args=[]){
     super(elem);
 
     this.name = name;
-    this.elems = elems;
+    this.args = args;
   }
-
-  get pri(){ return 1; }
 
   get isStruct(){ return 1; }
 
-  push(elem){ this.elems.push(elem); }
+  push(elem){ this.args.push(elem); }
 }
 
 class FunctionExpression extends Expression{
-  constructor(elem, name, elems=[]){
+  constructor(elem, name, args=[]){
     super(elem);
 
     this.name = name;
-    this.elems = elems;
+    this.args = args;
   }
 
   get isFunc(){ return 1; }
 
-  push(elem){ this.elems.push(elem); }
+  push(elem){ this.args.push(elem); }
 }
 
 class VariableExpression extends Expression{
@@ -373,9 +458,36 @@ class VariableExpression extends Expression{
     this.name = name;
   }
 
-  get pri(){ return 0; }
-
   get isVar(){ return 1; }
+}
+
+class TheoremRef{
+  get expr(){ O.virtual('expr'); }
+}
+
+class TheoremArgumentRef extends TheoremRef{
+  constructor(arg, index){
+    super();
+
+    this.arg = arg;
+    this.index = index;
+  }
+
+  get expr(){
+    return this.arg;
+  }
+}
+
+class TheoremStepRef extends TheoremRef{
+  constructor(step){
+    super();
+
+    this.step = step;
+  }
+
+  get expr(){
+    return this.step.expr;
+  }
 }
 
 const dataTypesObj = {
@@ -387,6 +499,11 @@ const dataTypesObj = {
 const dataTypesArr = O.keys(dataTypesObj);
 
 module.exports = Object.assign(Entity, {
+  dataTypesObj,
+  dataTypesArr,
+
+  varsMap2str,
+
   Function,
   Axiom,
   Theorem,
@@ -397,7 +514,4 @@ module.exports = Object.assign(Entity, {
   StructExpression,
   FunctionExpression,
   VariableExpression,
-
-  dataTypesObj,
-  dataTypesArr,
 });

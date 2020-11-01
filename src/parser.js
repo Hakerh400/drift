@@ -179,6 +179,16 @@ class Parser{
     }
   }
 
+  warn(msg, line=this.cLinePrev , pos=this.cPosPrev){
+    assert(typeof line === 'number');
+    assert(typeof pos === 'number');
+
+    this.pa.sWarn(msg, this.file, O.sanl(this.str)[line - 1], line, pos);
+  }
+
+  warnc(msg){ this.warn(msg, this.cLinePrev, this.cPosPrev); }
+  warnt(msg){ this.warn(msg, this.tLinePrev, this.tPosPrev); }
+
   err(msg, line=this.cLinePrev , pos=this.cPosPrev){
     assert(typeof line === 'number');
     assert(typeof pos === 'number');
@@ -305,6 +315,13 @@ class ListElement extends O.Stringifiable{
   get n(){
     return this.elems.length;
   }
+  
+  warn(msg, line=this.startLine, pos=this.startPos){
+    this.parser.warn(msg, line, pos);
+  }
+
+  warnStart(msg){ this.warn(msg, this.startLine, this.startPos); }
+  warnEnd(msg){ this.warn(msg, this.endLine, this.endPos); }
 
   err(msg, line=this.startLine, pos=this.startPos){
     this.parser.err(msg, line, pos);

@@ -284,7 +284,7 @@ class Theorem extends SimpleEntity{
           if(seen.has(step)) continue;
 
           const {fst} = step.elem;
-          fst.err(`Step ${O.sf(fst.m)} is not used in the final result`);
+          fst.warn(`Step ${O.sf(fst.m)} is not used in the final result`);
         }
       }
     }

@@ -306,9 +306,8 @@ class System{
     );
   }
 
-  err(msg){
-    this.pa.err(msg);
-  }
+  warn(msg){ this.pa.warn(msg); }
+  err(msg){ this.pa.err(msg); }
 }
 
 module.exports = System;

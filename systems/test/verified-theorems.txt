@@ -1,11 +1,17 @@
 (verified-theorems
+  ide
   impl-ab
   impl-refl
   impl-ide
   impl-r1
   impl-r2
+  impl-r3
   mp
+  impl-r4
   impl-reord
-  mpp-d
   mpp
+  impl-tr-inv-d
+  impl-tr
+  mpt-d
+  mpt
 )

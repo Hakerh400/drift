@@ -12,9 +12,13 @@
   impl-r3
   impl-rn2
   mpp
+  impl-t1-d
   impl-tr-inv-d
   impl-tr-d
   impl-tr
   mpt-d
   mpt
+  neg-r1-d
+  neg-r1
+  neg-r2-d
 )

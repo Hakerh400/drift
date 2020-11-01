@@ -5,12 +5,15 @@
   impl-ide
   impl-r1
   impl-r2
-  impl-r3
   mp
   impl-r4
   impl-reord
+  impl-mid
+  impl-r3
+  impl-rn2
   mpp
   impl-tr-inv-d
+  impl-tr-d
   impl-tr
   mpt-d
   mpt

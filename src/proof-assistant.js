@@ -10,7 +10,7 @@ const NameChecker = require('./name-checker');
 
 const {ListElement, Identifier, List} = Parser;
 
-const THROW_ON_WARNINGS = 0;
+const THROW_ON_WARNING = 0;
 
 const cwd = __dirname;
 const defaultPath = path.join(cwd, '..');
@@ -112,7 +112,7 @@ class ProofAssistant{
   }
 
   sWarn(msg, file, str, line, pos){
-    if(!THROW_ON_WARNINGS){
+    if(!THROW_ON_WARNING){
       log.inc();
       log(msg);
       log.dec();
@@ -125,7 +125,7 @@ class ProofAssistant{
 
   warn(msg){
     log(msg);
-    if(!THROW_ON_WARNINGS) return;
+    if(!THROW_ON_WARNING) return;
 
     O.exit();
   }

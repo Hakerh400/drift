@@ -19,12 +19,22 @@
   mpt-d
   mpt
   neg-r1-d
-  neg-r1
-  neg-r2-d
   neg-r3-d
-  neg-r3
+  neg-r8-d
   neg-r4-d
+  neg-r10-d
+  neg-r12-d
+  neg-m1-d
+  neg-m1
+  neg-r1
+  neg-r11-d
+  neg-r2-d
+  neg-r3
   neg-r4
   neg-s1
   neg-r5-d
+  neg-r6-d
+  neg-r6
+  neg-r7-d
+  neg-r9-d
 )

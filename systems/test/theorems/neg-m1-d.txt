@@ -1,0 +1,7 @@
+(theorem neg-m1-d ((pred a) (pred b))
+  (1 (neg-r12-d (1) (2)) (|- (-> (-> a b) (-> (~ (~ a)) (~ (~ b))))))
+  (2 (wff-neg-intr (1))  (pred (~ a)))
+  (3 (wff-neg-intr (2))  (pred (~ b)))
+  (4 (ax-lk 2 3)         (|- (-> (-> (~ (~ a)) (~ (~ b))) (-> (~ b) (~ a)))))
+  (5 (impl-tr 1 4)       (|- (-> (-> a b) (-> (~ b) (~ a)))))
+)

@@ -26,14 +26,17 @@
   neg-r12-d
   neg-m1-d
   neg-m1
+  neg-r6-d
+  neg-r2-d
+  neg-m3-d
+  neg-m3
+  neg-m2
   neg-r1
   neg-r11-d
-  neg-r2-d
   neg-r3
   neg-r4
   neg-s1
   neg-r5-d
-  neg-r6-d
   neg-r6
   neg-r7-d
   neg-r9-d

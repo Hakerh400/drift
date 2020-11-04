@@ -1,3 +1,0 @@
-(axiom ax-ide (a)
-  a
-)

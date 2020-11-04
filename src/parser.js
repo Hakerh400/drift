@@ -250,22 +250,26 @@ class ListElement extends O.Stringifiable{
     return this.ident().name;
   }
 
+  get isNat(){
+    return /^(?:0|[1-9][0-9]*)$/.test(this.m);
+  }
+
+  get isInt(){
+    return /^(?:0|\-?[1-9][0-9]*)$/.test(this.m);
+  }
+
   get nat(){
-    const s = this.m;
+    if(!this.isNat)
+      this.err(`Expected a natural number, but found ${O.sf(this.m)}`);
 
-    if(!/^(?:0|[1-9][0-9]*)$/.test(s))
-      this.err(`Expected a natural number, but found ${O.sf(s)}`);
-
-    return BigInt(s);
+    return BigInt(this.m);
   }
 
   get int(){
-    const s = this.m;
+    if(!this.isInt)
+      this.err(`Expected an integer, but found ${O.sf(this.m)}`);
 
-    if(!/^(?:0|\-?[1-9][0-9]*)$/.test(s))
-      this.err(`Expected an integer, but found ${O.sf(s)}`);
-
-    return BigInt(s);
+    return BigInt(this.m);
   }
 
   lenp(start){ return this.len(start, null); }

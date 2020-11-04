@@ -47,6 +47,7 @@ class Entity{
   }
 
   getRef(name){
+    assert(typeof name === 'string');
     return this.refs[name];
   }
 
@@ -263,19 +264,29 @@ class Theorem extends SimpleEntity{
 
       while(stack.length !== 0){
         const step = stack.pop();
-        const {args} = step.inv;
+        const {inv} = step;
 
-        for(const arg of args){
-          if(arg instanceof TheoremArgumentRef) continue;
+        if(inv instanceof ArgumentReference) continue;
 
-          assert(arg instanceof TheoremStepRef);
+        if(inv instanceof TheoremInvocation){
+          const {args} = step.inv;
 
-          const {step} = arg;
-          if(seen.has(step)) continue;
+          for(const arg of args){
+            if(arg instanceof TheoremArgumentRef) continue;
 
-          seen.add(step);
-          stack.push(step);
+            assert(arg instanceof TheoremStepRef);
+
+            const {step} = arg;
+            if(seen.has(step)) continue;
+
+            seen.add(step);
+            stack.push(step);
+          }
+
+          continue;
         }
+
+        assert.fail(inv?.constructor?.name);
       }
 
       if(seen.size !== steps.length){
@@ -318,6 +329,34 @@ class Theorem extends SimpleEntity{
 
   parseInv(elem){
     const {fst} = elem;
+
+    const getArg = e => {
+      const index = e.nat;
+
+      if(index === 0n || index > BigInt(this.args.length))
+        e.err(`Undefined argument index ${index}`);
+
+      const n = Number(index) - 1;
+      return new TheoremArgumentRef(this.args[n], n);
+    };
+
+    const checkArgIndex = e => {
+      const index = e.nat;
+
+    };
+
+    if(fst.v){
+      const e = fst.uni;
+
+      if(e.isNat){
+        elem.len(1);
+        const arg = getArg(e);
+        return new ArgumentReference(elem, arg);
+      }
+
+      e.err(`Unrecognized invocation target`);
+    }
+
     const name = fst.m;
     const [type, arity] = this.getInfoOf(fst, name);
 
@@ -327,16 +366,7 @@ class Theorem extends SimpleEntity{
     elem.len(arity + 1n);
 
     const args = elem.a(1, elem => {
-      if(elem.v){
-        const num = elem.uni;
-        const index = num.nat;
-
-        if(index === 0n || index > BigInt(this.args.length))
-          num.err(`Undefined argument index ${index}`);
-
-        const n = Number(index) - 1;
-        return new TheoremArgumentRef(this.args[n], n);
-      }
+      if(elem.v) return getArg(elem.uni);
 
       const name = elem.m;
 
@@ -346,7 +376,7 @@ class Theorem extends SimpleEntity{
       return new TheoremStepRef(this.getStep(name));
     });
 
-    return new Invocation(elem, name, args);
+    return new TheoremInvocation(elem, name, args);
   }
 
   get isTheorem(){ return 1; }
@@ -369,7 +399,21 @@ class Step extends Constituent{
   }
 }
 
-class Invocation extends Constituent{
+class Invocation extends Constituent{}
+
+class ArgumentReference extends Invocation{
+  constructor(elem, arg){
+    super(elem);
+
+    this.arg = arg;
+  }
+
+  get expr(){
+    return this.arg.expr;
+  }
+}
+
+class TheoremInvocation extends Invocation{
   constructor(elem, name, args){
     super(elem);
 
@@ -540,6 +584,8 @@ module.exports = Object.assign(Entity, {
 
   Step,
   Invocation,
+  ArgumentReference,
+  TheoremInvocation,
   Expression,
   StructExpression,
   FunctionExpression,

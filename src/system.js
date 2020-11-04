@@ -222,43 +222,56 @@ class System{
 
       for(const step of th.stepsArr){
         const {inv, expr} = step;
-        const {name} = inv;
-        const invEnt = this.getEnt(name);
+        const expected = step.expr;
+        let actual;
 
-        let expected = null;
-        const actual = step.expr;
-
-        calcResultingExpr: {
-          const type = th.getRefType(name);
-
-          const calcSimpleExpr = () => {
-            const vars = invEnt.matchVars(inv.argExprs, th);
-            if(vars instanceof SystemError) thrw(step, vars);
-
-            return invEnt.result.subst(vars);
-          };
-
-          if(type === 'axiom'){
-            expected = calcSimpleExpr();
-            break calcResultingExpr;
+        calcActual: {
+          if(inv instanceof Entity.ArgumentReference){
+            actual = inv.expr;
+            break calcActual;
           }
 
-          if(type === 'theorem'){
-            if(!this.isTheoremVerified(name)){
-              const th = this.getEnt(name);
+          if(inv instanceof Entity.TheoremInvocation){
+            const {name} = inv;
+            const invEnt = this.getEnt(name);
 
-              if(seen.has(th))
-                inv.elem.fst.err(`Cyclic theorem dependence:\n\n${
-                  stack.map(a => a.name).join('\n')}\n`);
+            calcResultingExpr: {
+              const type = th.getRefType(name);
 
-              yield [verify, th];
+              const calcSimpleExpr = () => {
+                const vars = invEnt.matchVars(inv.argExprs, th);
+                if(vars instanceof SystemError) thrw(step, vars);
+
+                return invEnt.result.subst(vars);
+              };
+
+              if(type === 'axiom'){
+                actual = calcSimpleExpr();
+                break calcResultingExpr;
+              }
+
+              if(type === 'theorem'){
+                if(!this.isTheoremVerified(name)){
+                  const th = this.getEnt(name);
+
+                  if(seen.has(th))
+                    inv.elem.fst.err(`Cyclic theorem dependence:\n\n${
+                      stack.map(a => a.name).join('\n')}\n`);
+
+                  yield [verify, th];
+                }
+
+                actual = calcSimpleExpr();
+                break calcResultingExpr;
+              }
+
+              assert.fail(type);
             }
 
-            expected = calcSimpleExpr();
-            break calcResultingExpr;
+            break calcActual;
           }
 
-          assert.fail(type);
+          assert.fail(inv?.constructor?.name);
         }
 
         if(!actual.eq(expected))

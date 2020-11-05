@@ -5,14 +5,19 @@ const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
 
-const spacings = [
+const spacingTypes = [
   ' ',
   '\n',
   '\n\n',
 ];
 
+let a=O.obj();
+Error.stackTraceLimit=1e9;
+
 class Parser{
   static parse(pa, file){
+    if(file in a) O.exit('\n\n'+file+'\n\n'+a[file]+'\n\n'+new Error().stack)
+    a[file] = new Error().stack
     return new Parser(pa, file).parse();
   }
 
@@ -365,7 +370,7 @@ class Identifier extends ListElement{
 
 class List extends ListElement{
   spacingType = 0;
-  spacingStart = 1;
+  spacingTypestart = 1;
 
   constructor(elems=null, parser, startLine, startPos){
     super(parser, startLine, startPos);
@@ -405,26 +410,26 @@ class List extends ListElement{
   get chNum(){ return this.elems.length; }
   getCh(i){ return this.elems[i]; }
 
-  setsp(spacingType=0, spacingStart=1){
+  setsp(spacingType=0, spacingTypestart=1){
     this.spacingType = spacingType;
-    this.spacingStart = spacingStart;
+    this.spacingTypestart = spacingTypestart;
   }
 
   toStr(){
-    const {elems, spacingType, spacingStart} = this;
+    const {elems, spacingType, spacingTypestart} = this;
     const arr = ['('];
 
     elems.forEach((e, i) => {
-      if(spacingType !== 0 && i === spacingStart)
+      if(spacingType !== 0 && i === spacingTypestart)
         arr.push(this.inc);
 
-      const spType = i >= spacingStart ? spacingType : 0;
-      if(spType !== 0 || i !== 0) arr.push(spacings[spType]);
+      const spType = i >= spacingTypestart ? spacingType : 0;
+      if(spType !== 0 || i !== 0) arr.push(spacingTypes[spType]);
 
       arr.push(e);
     });
 
-    if(spacingType !== 0 && elems.length > spacingStart)
+    if(spacingType !== 0 && elems.length > spacingTypestart)
       arr.push(this.dec, '\n');
 
     arr.push(')');
@@ -451,7 +456,7 @@ class TopList extends List{
 }
 
 module.exports = Object.assign(Parser, {
-  spacings,
+  spacingTypes,
 
   ListElement,
   Identifier,

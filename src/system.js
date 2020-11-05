@@ -16,6 +16,7 @@ class System{
   #structs = null;
   #verifiedTheorems = null;
   #dataColls = O.arr2obj(dataTypesArr, null);
+  #rawEnts = O.obj();
 
   constructor(pa, name){
     this.pa = pa;
@@ -119,6 +120,33 @@ class System{
     return obj;
   }
 
+  hasRawEnt(name){
+    return name in this.rawEnts;
+  }
+
+  getRawEnt(type, name){
+    const rawEnts = this.#rawEnts;
+
+    if(!(type in rawEnts))
+      rawEnts[type] = O.obj();
+
+    const ents = rawEnts[type];
+
+    if(!(name in ents))
+      ents[name] = this.#loadRawEnt(type, name);
+
+    return ents[name];
+  }
+
+  #loadRawEnt(type, name){
+    const file = path.join(this.typeDir(type), `${name}.txt`);
+    return Parser.parse(this.pa, file);
+  }
+
+  hasEnt(name){
+    return this.getTypeOf(name) === null;
+  }
+
   getEnt(type, name=null){
     if(name === null){
       name = type;
@@ -140,10 +168,8 @@ class System{
   }
 
   #loadEnt(type, name){
-    const file = path.join(this.typeDir(type), `${name}.txt`);
-    const ent = new dataTypesObj[type](this, name, file);
-
-    return ent;
+    const raw = this.getRawEnt(type, name);
+    return new dataTypesObj[type](this, name, raw);
   }
 
   getTypeOf(name){
@@ -177,8 +203,7 @@ class System{
 
       case 'axiom':
       case 'theorem':
-        const file = path.join(this.typeDir(type), `${name}.txt`);
-        const top = Parser.parse(this, file).uni;
+        const top = this.getRawEnt(type, name).uni;
         arity = BigInt(top.e(2).n);
         break;
 
@@ -190,15 +215,11 @@ class System{
     return [type, arity];
   }
 
-  hasEnt(name){
-    return this.getTypeOf(name, 0) === null;
-  }
-
   isTheoremVerified(name){
     return name in this.verifiedTheorems;
   }
 
-  verifyTheorem(name){
+  verifyTheorem(name, save=1){
     if(this.isTheoremVerified(name)) return;
 
     const {pa} = this;
@@ -282,34 +303,36 @@ class System{
             actual.elem}`);
       }
 
-      this.declareTheoremAsVerified(name);
       stack.pop();
+      this.declareTheoremAsVerified(name, save);
     }.bind(this);
 
     O.rec(verify, this.getEnt(name));
   }
 
-  verifyAllTheorems(){
-    this.clearVerifiedTheorems();
+  verifyAllTheorems(save=1){
+    this.clearVerifiedTheorems(0);
 
     const names = this.getEntColl('theorem');
     
     for(const name in names){
       log(name);
-      this.verifyTheorem(name);
+      this.verifyTheorem(name, 0);
     }
+
+    if(save) this.saveVerifiedTheorems();
   }
 
-  declareTheoremAsVerified(name){
+  declareTheoremAsVerified(name, save=1){
     const {verifiedTheorems} = this;
 
     verifiedTheorems[name] = 1;
-    this.saveVerifiedTheorems();
+    if(save) this.saveVerifiedTheorems();
   }
 
-  clearVerifiedTheorems(){
+  clearVerifiedTheorems(save=1){
     this.#verifiedTheorems = O.obj();
-    this.saveVerifiedTheorems();
+    if(save) this.saveVerifiedTheorems();
   }
 
   saveVerifiedTheorems(){

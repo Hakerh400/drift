@@ -29,12 +29,10 @@ const varsMap2str = vars => {
 class Entity{
   refs = O.obj();
 
-  constructor(system, name, file){
+  constructor(system, name, elem){
     this.system = system;
-    this.file = file;
     this.name = name;
-
-    this.top = Parser.parse(system.pa, file).uni;
+    this.top = elem;
   }
 
   static get typeStr(){ O.virtual('typeStr'); }
@@ -90,10 +88,10 @@ class SimpleEntity extends Entity{
   args = [];
   result = null;
 
-  constructor(system, name, file){
-    super(system, name, file);
+  constructor(system, name, elem){
+    super(system, name, elem);
 
-    const {top} = this;
+    const top = this.top.uni;
 
     top.e(1).ident(name);
 
@@ -227,10 +225,10 @@ class SimpleEntity extends Entity{
 class Axiom extends SimpleEntity{
   static get typeStr(){ return 'axiom'; }
 
-  constructor(system, name, file){
-    super(system, name, file);
+  constructor(system, name, elem){
+    super(system, name, elem);
 
-    const {top} = this;
+    const top = this.top.uni;
 
     this.result = this.parseExpr(top.len(4).e(3));
   }
@@ -242,10 +240,10 @@ class Theorem extends SimpleEntity{
   stepsArr = [];
   stepsObj = O.obj();
 
-  constructor(system, name, file){
-    super(system, name, file);
+  constructor(system, name, elem){
+    super(system, name, elem);
 
-    const {top} = this;
+    const top = this.top.uni;
 
     top.type(this.typeStr);
 
@@ -269,7 +267,7 @@ class Theorem extends SimpleEntity{
         if(inv instanceof ArgumentReference) continue;
 
         if(inv instanceof TheoremInvocation){
-          const {args} = step.inv;
+          const {args} = inv;
 
           for(const arg of args){
             if(arg instanceof TheoremArgumentRef) continue;
@@ -462,11 +460,20 @@ class Expression extends Constituent{
     return O.rec(eq, this, other);
   }
 
-  subst(vars){
+  subst(map, literal=1){
+    const entries = !literal ? [...map] : null;
+
     const subst = function*(expr){
       if(expr instanceof VariableExpression){
-        assert(vars.has(expr));
-        return vars.get(expr);
+        if(literal){
+          assert(map.has(expr));
+          return map.get(expr);
+        }
+
+        const index = entries.findIndex(a => a[0].eq(expr));
+        assert(index !== -1);
+
+        return entries[index][1];
       }
 
       if(expr instanceof StructExpression){

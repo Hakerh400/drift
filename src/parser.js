@@ -11,13 +11,8 @@ const spacingTypes = [
   '\n\n',
 ];
 
-let a=O.obj();
-Error.stackTraceLimit=1e9;
-
 class Parser{
   static parse(pa, file){
-    if(file in a) O.exit('\n\n'+file+'\n\n'+a[file]+'\n\n'+new Error().stack)
-    a[file] = new Error().stack
     return new Parser(pa, file).parse();
   }
 
@@ -370,7 +365,7 @@ class Identifier extends ListElement{
 
 class List extends ListElement{
   spacingType = 0;
-  spacingTypestart = 1;
+  spacingStart = 1;
 
   constructor(elems=null, parser, startLine, startPos){
     super(parser, startLine, startPos);
@@ -410,26 +405,26 @@ class List extends ListElement{
   get chNum(){ return this.elems.length; }
   getCh(i){ return this.elems[i]; }
 
-  setsp(spacingType=0, spacingTypestart=1){
+  setsp(spacingType=0, spacingStart=1){
     this.spacingType = spacingType;
-    this.spacingTypestart = spacingTypestart;
+    this.spacingStart = spacingStart;
   }
 
   toStr(){
-    const {elems, spacingType, spacingTypestart} = this;
+    const {elems, spacingType, spacingStart} = this;
     const arr = ['('];
 
     elems.forEach((e, i) => {
-      if(spacingType !== 0 && i === spacingTypestart)
+      if(spacingType !== 0 && i === spacingStart)
         arr.push(this.inc);
 
-      const spType = i >= spacingTypestart ? spacingType : 0;
+      const spType = i >= spacingStart ? spacingType : 0;
       if(spType !== 0 || i !== 0) arr.push(spacingTypes[spType]);
 
       arr.push(e);
     });
 
-    if(spacingType !== 0 && elems.length > spacingTypestart)
+    if(spacingType !== 0 && elems.length > spacingStart)
       arr.push(this.dec, '\n');
 
     arr.push(')');

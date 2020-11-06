@@ -1,0 +1,11 @@
+(func func-test
+  (((-> a b) c d)
+    (-> (func-test a c d) (func-test b c d))
+  )
+  ((a a b)
+    b
+  )
+  ((a b c)
+    a
+  )
+)

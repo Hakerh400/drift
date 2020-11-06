@@ -4,13 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
-const Entity = require('./entity');
-const Parser = require('./parser');
-const NameChecker = require('./name-checker');
-const SystemError = require('./system-error');
 const debug = require('./debug');
-
-const {dataTypesObj, dataTypesArr} = Entity;
 
 class System{
   #structs = null;
@@ -197,15 +191,20 @@ class System{
     let arity;
 
     switch(type){
-      case 'struct':
+      case 'struct': {
         arity = this.getStructArity(name);
-        break;
+      } break;
 
       case 'axiom':
-      case 'theorem':
+      case 'theorem': {
         const top = this.getRawEnt(type, name).uni;
         arity = BigInt(top.e(2).n);
-        break;
+      } break;
+
+      case 'function': {
+        const top = this.getRawEnt(type, name).uni;
+        arity = BigInt(top.e(2).fst.n);
+      } break;
 
       default:
         assert.fail(type);
@@ -295,7 +294,10 @@ class System{
           assert.fail(inv?.constructor?.name);
         }
 
-        if(!actual.eq(expected))
+        const actualSimpl = actual.simplify(this);
+        const expectedSimpl = expected.simplify(this);
+
+        if(!actualSimpl.eq(expectedSimpl))
           thrw(step, `Resulting expressions do not match\n\n${
             'Expected:'.padEnd(9)} ${
             expected.elem}\n${
@@ -347,3 +349,10 @@ class System{
 }
 
 module.exports = System;
+
+const Parser = require('./parser');
+const NameChecker = require('./name-checker');
+const SystemError = require('./system-error');
+const Entity = require('./entity');
+
+const {dataTypesObj, dataTypesArr} = Entity;

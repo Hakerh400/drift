@@ -5,15 +5,10 @@ const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
 const {ArrayList} = require('@hakerh400/list');
-const Parser = require('./parser');
-const NameChecker = require('./name-checker');
-const SystemError = require('./system-error');
 const debug = require('./debug');
 
-const {Identifier, List} = Parser;
-
 const isExprType = type => {
-  return type === 'struct' || type === 'func';
+  return type === 'struct';
 };
 
 const isInvType = type => {
@@ -32,7 +27,7 @@ class Entity{
   constructor(system, name, elem){
     this.system = system;
     this.name = name;
-    this.top = elem;
+    this.elem = elem;
   }
 
   static get typeStr(){ O.virtual('typeStr'); }
@@ -78,6 +73,14 @@ class Entity{
 }
 
 class Function extends Entity{
+  constructor(system, name, elem){
+    super(system, name, elem);
+
+    const top = this.elem.uni;
+
+    top.type('func');
+  }
+
   static get typeStr(){ return 'function'; }
   get isFunc(){ return 1; }
 }
@@ -91,7 +94,7 @@ class SimpleEntity extends Entity{
   constructor(system, name, elem){
     super(system, name, elem);
 
-    const top = this.top.uni;
+    const top = this.elem.uni;
 
     top.e(1).ident(name);
 
@@ -114,6 +117,8 @@ class SimpleEntity extends Entity{
   }
 
   parseExpr(elem, formal){
+    const {system} = this;
+
     const parseExpr = function*(elem){
       if(elem.s){
         const varName = elem.m;
@@ -139,10 +144,15 @@ class SimpleEntity extends Entity{
       if(type === null)
         fst.err(`Unknown entity ${O.sf(name)}`);
 
-      if(!isExprType(type))
-        this.typeErr(fst, name, type);
-
       elem.len(arity + 1n);
+
+      const isFunc = type === 'function';
+
+      if(isFunc && formal)
+        fst.err(`Function cannot be used in a formal argument`);
+
+      if(!isFunc && !isExprType(type))
+        this.typeErr(fst, name, type);
 
       for(let i = 0; i !== args.length; i++)
         args[i] = yield [parseExpr, args[i]];
@@ -150,10 +160,11 @@ class SimpleEntity extends Entity{
       if(type === 'struct')
         return new StructExpression(elem, name, args);
 
-      // if(type === 'func')
-      //   return new FunctionExpression(elem, name, args);
+      if(isFunc){
+        return new FunctionExpression(elem, name, args);
+      }
 
-      assert.fail();
+      assert.fail(type);
     }.bind(this);
 
     return O.rec(parseExpr, elem);
@@ -228,7 +239,9 @@ class Axiom extends SimpleEntity{
   constructor(system, name, elem){
     super(system, name, elem);
 
-    const top = this.top.uni;
+    const top = this.elem.uni;
+
+    top.type('axiom');
 
     this.result = this.parseExpr(top.len(4).e(3));
   }
@@ -243,9 +256,9 @@ class Theorem extends SimpleEntity{
   constructor(system, name, elem){
     super(system, name, elem);
 
-    const top = this.top.uni;
+    const top = this.elem.uni;
 
-    top.type(this.typeStr);
+    top.type('theorem');
 
     const steps = top.lenp(4).a(3);
     let lastStep = null;
@@ -382,7 +395,7 @@ class Theorem extends SimpleEntity{
 
 class Constituent{
   constructor(elem){
-    assert(elem instanceof Parser.ListElement);
+    assert(elem instanceof ListElement);
     this.elem = elem;
   }
 }
@@ -495,32 +508,65 @@ class Expression extends Constituent{
 
     return O.rec(subst, this);
   }
+
+  simplify(system){
+    assert(system instanceof System);
+
+    const simplify = function*(expr){
+      if(expr instanceof VectorExpression){
+        const {name, args} = expr;
+        const argsNew = [];
+
+        for(const arg of args)
+          argsNew.push(yield [simplify, arg]);
+
+        if(expr instanceof StructExpression)
+          return new StructExpression(null, name, args);
+
+        if(expr instanceof FunctionExpression){
+          const ent = system.getEnt(name);
+          O.exit();
+        }
+
+        assert.fail(expr?.constructor?.name);
+      }
+
+      if(expr instanceof VariableExpression)
+        return expr;
+
+      assert.fail(expr?.constructor?.name);
+    }.bind(this);
+
+    return O.rec(simplify, this);
+  }
 }
 
-class StructExpression extends Expression{
-  constructor(elem, name, args=[]){
+class VectorExpression extends Expression{
+  constructor(elem=null, name, args=[]){
+    if(elem === null){
+      const elemsNew = [new Identifier(name)];
+
+      for(const arg of args)
+        elemsNew.push(arg.elem);
+
+      elem = new List(elemsNew);
+    }
+
     super(elem);
 
     this.name = name;
     this.args = args;
   }
 
+  push(elem){ this.args.push(elem); }
+}
+
+class StructExpression extends VectorExpression{
   get isStruct(){ return 1; }
-
-  push(elem){ this.args.push(elem); }
 }
 
-class FunctionExpression extends Expression{
-  constructor(elem, name, args=[]){
-    super(elem);
-
-    this.name = name;
-    this.args = args;
-  }
-
+class FunctionExpression extends VectorExpression{
   get isFunc(){ return 1; }
-
-  push(elem){ this.args.push(elem); }
 }
 
 class VariableExpression extends Expression{
@@ -594,7 +640,15 @@ module.exports = Object.assign(Entity, {
   ArgumentReference,
   TheoremInvocation,
   Expression,
+  VectorExpression,
   StructExpression,
   FunctionExpression,
   VariableExpression,
 });
+
+const System = require('./system');
+const Parser = require('./parser');
+const NameChecker = require('./name-checker');
+const SystemError = require('./system-error');
+
+const {ListElement, Identifier, List} = Parser;

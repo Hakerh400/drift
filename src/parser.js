@@ -273,6 +273,7 @@ class ListElement extends O.Stringifiable{
   }
 
   lenp(start){ return this.len(start, null); }
+  lenm(end){ return this.len(null, end); }
 
   e(i){
     this.lenp(i + 1);

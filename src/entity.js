@@ -76,9 +76,22 @@ class Function extends Entity{
   constructor(system, name, elem){
     super(system, name, elem);
 
-    const top = this.elem.uni;
+    const top = this.elem;
 
     top.type('func');
+
+    const arity = top.e(2).fst.n;
+    const casesNum = top.n - 2;
+    const cases = [];
+
+    for(let i = 0; i !== casesNum; i++){
+      const elem = top.e(i + 2);
+
+      elem.fst.len(arity);
+      cases.push(new FunctionCase(system, elem));
+    }
+
+    this.cases = cases;
   }
 
   static get typeStr(){ return 'function'; }
@@ -91,14 +104,15 @@ class SimpleEntity extends Entity{
   args = [];
   result = null;
 
-  constructor(system, name, elem){
+  constructor(system, name, elem, argsOffset=2){
     super(system, name, elem);
 
-    const top = this.elem.uni;
+    const top = this.elem;
 
-    top.e(1).ident(name);
+    if(name !== null)
+      top.e(1).ident(name);
 
-    for(const elem of top.e(2).a())
+    for(const elem of top.e(argsOffset).a())
       this.args.push(this.parseArg(elem));
   }
 
@@ -231,6 +245,24 @@ class SimpleEntity extends Entity{
 
     return vars;
   }
+
+  getResult(args, th){
+    const vars = this.matchVars(args, th);
+    if(vars instanceof SystemError) return vars;
+    return this.result.subst(vars);
+  }
+}
+
+class FunctionCase extends SimpleEntity{
+  constructor(system, elem){
+    super(system, null, elem, 0);
+
+    const top = this.elem;
+
+    this.result = this.parseExpr(top.len(2).e(1));
+  }
+
+  static get typeStr(){ return 'function'; }
 }
 
 class Axiom extends SimpleEntity{
@@ -239,7 +271,7 @@ class Axiom extends SimpleEntity{
   constructor(system, name, elem){
     super(system, name, elem);
 
-    const top = this.elem.uni;
+    const top = this.elem;
 
     top.type('axiom');
 
@@ -256,7 +288,7 @@ class Theorem extends SimpleEntity{
   constructor(system, name, elem){
     super(system, name, elem);
 
-    const top = this.elem.uni;
+    const top = this.elem;
 
     top.type('theorem');
 
@@ -489,43 +521,48 @@ class Expression extends Constituent{
         return entries[index][1];
       }
 
-      if(expr instanceof StructExpression){
-        const args = [];
+      if(expr instanceof VectorExpression){
+        const {name} = expr;
+        const ctor = expr.constructor;
+        const argsNew = [];
 
         for(const arg of expr.args)
-          args.push(yield [subst, arg]);
+          argsNew.push(yield [subst, arg]);
 
-        const elemNew = new List([
-          new Identifier(expr.name),
-          ...args.map(a => a.elem),
-        ]);
-
-        return new StructExpression(elemNew, expr.name, args);
+        return new ctor(null, name, argsNew);
       }
 
-      assert.fail(expr);
+      assert.fail(expr?.constructor?.name);
     };
 
     return O.rec(subst, this);
   }
 
-  simplify(system){
+  reduce(system){
     assert(system instanceof System);
 
-    const simplify = function*(expr){
+    const reduce = function*(expr){
       if(expr instanceof VectorExpression){
         const {name, args} = expr;
         const argsNew = [];
 
         for(const arg of args)
-          argsNew.push(yield [simplify, arg]);
+          argsNew.push(yield [reduce, arg]);
 
         if(expr instanceof StructExpression)
-          return new StructExpression(null, name, args);
+          return new StructExpression(null, name, argsNew);
 
         if(expr instanceof FunctionExpression){
           const ent = system.getEnt(name);
-          O.exit();
+
+          for(const cs of ent.cases){
+            const result = cs.getResult(argsNew);
+            if(result instanceof SystemError) continue;
+
+            return yield [reduce, result];
+          }
+
+          return expr;
         }
 
         assert.fail(expr?.constructor?.name);
@@ -537,7 +574,7 @@ class Expression extends Constituent{
       assert.fail(expr?.constructor?.name);
     }.bind(this);
 
-    return O.rec(simplify, this);
+    return O.rec(reduce, this);
   }
 }
 

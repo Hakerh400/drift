@@ -162,7 +162,7 @@ class System{
   }
 
   #loadEnt(type, name){
-    const raw = this.getRawEnt(type, name);
+    const raw = this.getRawEnt(type, name).uni;
     return new dataTypesObj[type](this, name, raw);
   }
 
@@ -259,10 +259,9 @@ class System{
               const type = th.getRefType(name);
 
               const calcSimpleExpr = () => {
-                const vars = invEnt.matchVars(inv.argExprs, th);
+                const vars = invEnt.getResult(inv.argExprs, th);
                 if(vars instanceof SystemError) thrw(step, vars);
-
-                return invEnt.result.subst(vars);
+                return vars;
               };
 
               if(type === 'axiom'){
@@ -294,15 +293,19 @@ class System{
           assert.fail(inv?.constructor?.name);
         }
 
-        const actualSimpl = actual.simplify(this);
-        const expectedSimpl = expected.simplify(this);
+        const actualRed = actual.reduce(this);
+        const expectedRed = expected.reduce(this);
 
-        if(!actualSimpl.eq(expectedSimpl))
+        if(!actualRed.eq(expectedRed))
           thrw(step, `Resulting expressions do not match\n\n${
             'Expected:'.padEnd(9)} ${
             expected.elem}\n${
             'Actual:'.padEnd(9)} ${
-            actual.elem}`);
+            actual.elem}\n\nAfter reduction:\n\n${
+            'Expected:'.padEnd(9)} ${
+            expectedRed.elem}\n${
+            'Actual:'.padEnd(9)} ${
+            actualRed.elem}`);
       }
 
       stack.pop();

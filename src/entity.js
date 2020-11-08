@@ -21,6 +21,17 @@ const varsMap2str = vars => {
   }).join('\n')}\n)`;
 };
 
+const natives = {
+  pair: 2,
+  nil: 0,
+  rule: 2,
+  infer: 1,
+  ident: 1,
+  func: 1,
+  case: 2,
+  meta: 2,
+};
+
 class Entity{
   refs = O.obj();
 
@@ -163,7 +174,7 @@ class SimpleEntity extends Entity{
       const isFunc = type === 'function';
 
       if(isFunc && formal)
-        fst.err(`Function cannot be used in a formal argument`);
+        fst.err(`A function cannot be used in a formal argument`);
 
       if(!isFunc && !isExprType(type))
         this.typeErr(fst, name, type);
@@ -486,7 +497,7 @@ class Expression extends Constituent{
         return expr1.name === expr2.name;
       }
 
-      if(expr1 instanceof StructExpression){
+      if(expr1 instanceof VectorExpression){
         if(expr1.name !== expr2.name) return 0;
 
         const args1 = expr1.args;
@@ -542,6 +553,9 @@ class Expression extends Constituent{
     assert(system instanceof System);
 
     const reduce = function*(expr){
+      if(expr instanceof VariableExpression)
+        return expr;
+
       if(expr instanceof VectorExpression){
         const {name, args} = expr;
         const argsNew = [];
@@ -567,9 +581,6 @@ class Expression extends Constituent{
 
         assert.fail(expr?.constructor?.name);
       }
-
-      if(expr instanceof VariableExpression)
-        return expr;
 
       assert.fail(expr?.constructor?.name);
     }.bind(this);

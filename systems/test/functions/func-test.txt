@@ -1,11 +1,11 @@
 (func func-test
-  (((-> a b) c d)
-    (-> (func-test a c d) (func-test b c d))
+  ((((rule) a b) c)
+    ((rule) (func-test a c) b)
   )
-  ((a a b)
-    b
+  ((((pair) a b) c)
+    ((pair) a (func-test b c))
   )
-  ((a b c)
+  ((((nil)) a)
     a
   )
 )

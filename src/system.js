@@ -259,9 +259,9 @@ class System{
               const type = th.getRefType(name);
 
               const calcSimpleExpr = () => {
-                const vars = invEnt.getResult(inv.argExprs, th);
-                if(vars instanceof SystemError) thrw(step, vars);
-                return vars;
+                const result = invEnt.getResult(inv.argExprs, th);
+                if(result instanceof SystemError) thrw(step, result);
+                return result;
               };
 
               if(type === 'axiom'){

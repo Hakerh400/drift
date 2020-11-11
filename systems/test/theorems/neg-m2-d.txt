@@ -1,0 +1,6 @@
+(theorem neg-m2-d ((pred a))
+  (1 (wff-neg-intr (1))       (pred (~ a)))
+  (2 (wff-impl-intr (1) 1)    (pred (-> a (~ a))))
+  (3 (impl-refl 2)            (|- (-> (-> a (~ a)) (-> a (~ a)))))
+  (4 (meta-impl (neg-m2 2) 3) (|- (-> (-> a (~ a)) (~ a))))
+)

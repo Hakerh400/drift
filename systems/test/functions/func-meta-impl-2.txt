@@ -1,0 +1,8 @@
+(func func-meta-impl-2
+  (((pred a) b)
+    (pred a)
+  )
+  (((|- a) b)
+    (|- (-> b a))
+  )
+)

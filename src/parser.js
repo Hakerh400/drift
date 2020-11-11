@@ -242,7 +242,6 @@ class ListElement extends O.Stringifiable{
   list(){ O.virtual('list'); }
   len(){ O.virtual('len'); }
   type(){ O.virtual('type'); }
-  get fst(){ O.virtual('fst'); }
   get uni(){ O.virtual('uni'); }
   get n(){ O.virtual('n'); }
 
@@ -276,11 +275,17 @@ class ListElement extends O.Stringifiable{
   lenm(end){ return this.len(null, end); }
 
   e(i){
+    assert(!isNaN(i));
     this.lenp(i + 1);
     return this.elems[i];
   }
 
   a(i=0, func=null){
+    if(func === null && typeof i === 'function'){
+      func = i;
+      i = 0;
+    }
+
     let arr = this.lenp(i).elems.slice(i);
     if(func !== null) arr = arr.map(func);
     return arr;
@@ -310,7 +315,7 @@ class ListElement extends O.Stringifiable{
   }
 
   get last(){
-    return this.e(this.length - 1);
+    return this.e(this.n - 1);
   }
 
   get uni(){

@@ -1,0 +1,5 @@
+(func func-meta-impl
+  ((((rule) a (|- b)) (pred c))
+    ((rule) (func-meta-impl-1 a c) (|- (-> c b)))
+  )
+)

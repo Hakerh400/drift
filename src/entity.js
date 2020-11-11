@@ -8,11 +8,24 @@ const {ArrayList} = require('@hakerh400/list');
 const debug = require('./debug');
 
 const isExprType = type => {
-  return type === 'struct';
+  return (
+    type === 'struct'
+  );
+};
+
+const isRuleType = type => {
+  return (
+    type === 'axiom' ||
+    type === 'theorem'
+  );
 };
 
 const isInvType = type => {
-  return type === 'axiom' || type === 'theorem';
+  return (
+    type === 'axiom' ||
+    type === 'theorem' ||
+    type === 'meta'
+  );
 };
 
 const varsMap2str = vars => {
@@ -21,15 +34,20 @@ const varsMap2str = vars => {
   }).join('\n')}\n)`;
 };
 
+const plural = type => {
+  if(type === 'meta') return type;
+  return `${type}s`;
+};
+
 const natives = {
   pair: 2,
   nil: 0,
   rule: 2,
-  infer: 1,
   ident: 1,
   func: 1,
   case: 2,
   meta: 2,
+  struct: 2,
 };
 
 class Entity{
@@ -41,9 +59,8 @@ class Entity{
     this.elem = elem;
   }
 
-  static get typeStr(){ O.virtual('typeStr'); }
-  get typeStr(){ return this.constructor.typeStr; }
-
+  static get type(){ O.virtual('type'); }
+  get type(){ return this.constructor.type; }
   get arity(){ O.virtual('arity'); }
 
   hasRef(name){
@@ -55,7 +72,10 @@ class Entity{
     return this.refs[name];
   }
 
-  addRef(name, info){
+  addRef(elem, name, info=null){
+    if(info === null)
+      info = this.getInfoOf(elem, name, 0);
+
     this.refs[name] = info;
   }
 
@@ -68,19 +88,49 @@ class Entity{
     if(info === null)
       elem.err(`Undefined entity ${O.sf(name)}`);
 
-    if(addRef) this.addRef(name, info);
+    if(addRef) this.addRef(elem, name, info);
     return info;
   }
 
+  getTypeOf(elem, name, addRef){
+    return this.getInfoOf(elem, name, addRef)[0];
+  }
+
+  getArityOf(elem, name, addRef){
+    return this.getInfoOf(elem, name, addRef)[1];
+  }
+
+  getRule(elem, name){
+    this.addRef(elem, name);
+    return this.system.getRule(name);
+  }
+
+  get isStruct(){ return 0; }
   get isFunc(){ return 0; }
+  get isRule(){ return 0; }
   get isAxiom(){ return 0; }
   get isTheorem(){ return 0; }
+  get isMeta(){ return 0; }
 
   typeErr(elem, name, type){
     elem.err(`Entity ${
       O.sf(name)} of type ${
       O.sf(type)} cannot be used here`);
   }
+}
+
+class Struct extends Entity{
+  #arity;
+
+  constructor(system, name, arity){
+    super(system, name, null);
+
+    this.#arity = arity;
+  }
+
+  static get type(){ return 'struct'; }
+  get isStruct(){ return 1; }
+  get arity(){ return this.#arity; }
 }
 
 class Function extends Entity{
@@ -105,7 +155,7 @@ class Function extends Entity{
     this.cases = cases;
   }
 
-  static get typeStr(){ return 'function'; }
+  static get type(){ return 'function'; }
   get isFunc(){ return 1; }
 }
 
@@ -227,7 +277,7 @@ class SimpleEntity extends Entity{
         if(rhs instanceof VariableExpression)
           return new SystemError(`Cannot assert that struct\n\n${
             lhs.elem}\n\nfrom ${
-            this.typeStr} ${
+            this.type} ${
             O.sf(this.name)} is equal to variable ${
             O.sf(rhs.name)}${
             th !== null ? ` from theorem ${O.sf(th.name)}` : ''}`);
@@ -273,11 +323,17 @@ class FunctionCase extends SimpleEntity{
     this.result = this.parseExpr(top.len(2).e(1));
   }
 
-  static get typeStr(){ return 'function'; }
+  static get type(){ return 'function'; }
 }
 
-class Axiom extends SimpleEntity{
-  static get typeStr(){ return 'axiom'; }
+class Rule extends SimpleEntity{
+  get isRule(){ return 1; }
+
+
+}
+
+class Axiom extends Rule{
+  static get type(){ return 'axiom'; }
 
   constructor(system, name, elem){
     super(system, name, elem);
@@ -292,7 +348,7 @@ class Axiom extends SimpleEntity{
   get isAxiom(){ return 1; }
 }
 
-class Theorem extends SimpleEntity{
+class Theorem extends Rule{
   stepsArr = [];
   stepsObj = O.obj();
 
@@ -356,7 +412,7 @@ class Theorem extends SimpleEntity{
     this.result = lastStep.expr;
   }
 
-  static get typeStr(){ return 'theorem'; }
+  static get type(){ return 'theorem'; }
 
   hasStep(name){ return name in this.stepsObj; }
   getStep(name){ return this.stepsObj[name]; }
@@ -394,11 +450,6 @@ class Theorem extends SimpleEntity{
       return new TheoremArgumentRef(this.args[n], n);
     };
 
-    const checkArgIndex = e => {
-      const index = e.nat;
-
-    };
-
     if(fst.v){
       const e = fst.uni;
 
@@ -412,13 +463,40 @@ class Theorem extends SimpleEntity{
     }
 
     const name = fst.m;
-    const [type, arity] = this.getInfoOf(fst, name);
+    let [type, arity] = this.getInfoOf(fst, name);
 
     if(!isInvType(type))
       this.typeErr(fst, name, type);
 
+    const isMeta = type === 'meta';
+
+    // Meta arguments
+    if(isMeta){
+      const metaArgs = elem.e(1).len(arity).a(elem => {
+        if(elem.v) return getArg(elem.uni).expr;
+
+        const name = elem.m;
+
+        if(this.hasStep(elem.m))
+          return this.getStep(name).expr;
+
+        const type = this.getTypeOf(elem, name);
+
+        if(!isRuleType(type))
+          this.typeErr(elem, name, type);
+
+        const [args, result] = this.getRule(elem, name);
+
+        log(args+'')
+        log(result+'')
+      });
+
+      O.exit('exit');
+    }
+
     elem.len(arity + 1n);
 
+    // Invocation arguments
     const args = elem.a(1, elem => {
       if(elem.v) return getArg(elem.uni);
 
@@ -434,6 +512,22 @@ class Theorem extends SimpleEntity{
   }
 
   get isTheorem(){ return 1; }
+}
+
+class Meta extends SimpleEntity{
+  static get type(){ return 'meta'; }
+
+  constructor(system, name, elem){
+    super(system, name, elem);
+
+    const top = this.elem;
+
+    top.type('meta');
+
+    this.result = this.parseExpr(top.len(4).e(3));
+  }
+
+  get isMeta(){ return 1; }
 }
 
 class Constituent{
@@ -467,16 +561,27 @@ class ArgumentReference extends Invocation{
   }
 }
 
-class TheoremInvocation extends Invocation{
+class VectorInvocation extends Invocation{
+  get argExprs(){
+    return this.args.map(a => a.expr);
+  }
+}
+
+class TheoremInvocation extends VectorInvocation{
   constructor(elem, name, args){
     super(elem);
 
     this.name = name;
     this.args = args;
   }
+}
 
-  get argExprs(){
-    return this.args.map(a => a.expr);
+class MetaInvocation extends VectorInvocation{
+  constructor(elem, rule, args){
+    super(elem);
+
+    this.rule = rule;
+    this.args = args;
   }
 }
 
@@ -657,19 +762,21 @@ class TheoremStepRef extends TheoremRef{
 }
 
 const entClasses = [
+  Struct,
   Function,
   Axiom,
   Theorem,
+  Meta,
 ];
 
 const dataTypesObj = O.obj();
 const dataTypesArr = [];
 
 for(const entc of entClasses){
-  const {typeStr} = entc;
+  const {type} = entc;
 
-  dataTypesObj[typeStr] = entc;
-  dataTypesArr.push(typeStr);
+  dataTypesObj[type] = entc;
+  dataTypesArr.push(type);
 }
 
 module.exports = Object.assign(Entity, {
@@ -677,8 +784,14 @@ module.exports = Object.assign(Entity, {
   dataTypesObj,
   dataTypesArr,
 
-  varsMap2str,
+  isExprType,
+  isRuleType,
+  isInvType,
 
+  varsMap2str,
+  plural,
+
+  Struct,
   Function,
   Axiom,
   Theorem,
@@ -686,7 +799,9 @@ module.exports = Object.assign(Entity, {
   Step,
   Invocation,
   ArgumentReference,
+  VectorInvocation,
   TheoremInvocation,
+  MetaInvocation,
   Expression,
   VectorExpression,
   StructExpression,

@@ -1,3 +1,0 @@
-(meta meta-test (a b)
-  (func-test a b)
-)

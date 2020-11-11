@@ -7,10 +7,9 @@ const O = require('omikron');
 const debug = require('./debug');
 
 class System{
-  #structs = null;
-  #verifiedTheorems = null;
   #dataColls = O.arr2obj(dataTypesArr, null);
   #rawEnts = O.obj();
+  #verifiedTheorems = null;
 
   constructor(pa, name){
     this.pa = pa;
@@ -31,14 +30,16 @@ class System{
   }
 
   typeDir(type){
-    return path.join(this.dir, `${type}s`);
+    return path.join(this.dir, Entity.plural(type));
   }
 
   get structs(){
-    if(this.#structs === null)
-      this.#structs = this.#loadStructs();
+    const data = this.#dataColls;
 
-    return this.#structs;
+    if(data.struct === null)
+      data.struct = this.#loadStructs();
+
+    return data.struct;
   }
 
   #loadStructs(){
@@ -54,7 +55,7 @@ class System{
       if(name in obj)
         elem.err(`This struct has already been declared`);
 
-      obj[name] = arity;
+      obj[name] = new Entity.Struct(this, name, arity);
       return name;
     });
 
@@ -98,6 +99,9 @@ class System{
   }
 
   #loadEntColl(type){
+    if(type === 'struct')
+      return this.#loadStructs();
+
     const dir = this.typeDir(type);
     const files = fs.readdirSync(dir);
     const obj = O.obj();
@@ -118,7 +122,13 @@ class System{
     return name in this.rawEnts;
   }
 
-  getRawEnt(type, name){
+  getRawEnt(type, name=null){
+    if(name === null){
+      name = type;
+      type = this.getTypeOf(name);
+      if(type === null) return null;
+    }
+
     const rawEnts = this.#rawEnts;
 
     if(!(type in rawEnts))
@@ -166,8 +176,37 @@ class System{
     return new dataTypesObj[type](this, name, raw);
   }
 
+  getRule(type, name=null){
+    if(name === null){
+      name = type;
+      type = this.getTypeOf(name);
+      if(type === null) return null;
+    }
+
+    const elem = this.getRawEnt(type, name).uni;
+    let args, result;
+
+    switch(type){
+      case 'axiom': {
+        args = elem.e(2).list();
+        result = elem.e(3);
+      } break;
+
+      case 'theorem': {
+        args = elem.e(2).list();
+        result = elem.last.last;
+      } break;
+
+      default:
+        assert.fail(type);
+        break;
+    }
+
+    return [args, result];
+  }
+
   getTypeOf(name){
-    let type = this.hasStruct(name) ? 'struct' : null;
+    let type = null;
 
     for(const t of dataTypesArr){
       const coll = this.getEntColl(t);
@@ -196,7 +235,8 @@ class System{
       } break;
 
       case 'axiom':
-      case 'theorem': {
+      case 'theorem':
+      case 'meta': {
         const top = this.getRawEnt(type, name).uni;
         arity = BigInt(top.e(2).n);
       } break;

@@ -1,7 +1,7 @@
 {
   "name": "@hakerh400/proof-assistant",
   "description": "A tool for checking, verifying, archiving and studying mathematical proofs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Thomas <hakerh403@gmail.com>",
   "main": "index.js",
   "contributors": [],

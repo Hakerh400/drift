@@ -1,4 +1,0 @@
-(theorem impl-r3 ((|- (-> a b)) (pred c))
-  (1 (impl-r1 (1) (2)) (|- (-> c (-> a b))))
-  (2 (impl-r2 1)       (|- (-> (-> c a) (-> c b))))
-)

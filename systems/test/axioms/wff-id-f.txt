@@ -1,3 +1,0 @@
-(axiom wff-id-f ()
-  (set (ident first))
-)

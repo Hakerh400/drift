@@ -1,3 +1,0 @@
-(axiom ax-sl-as ((pred a) (pred b) (pred c))
-  (|- (-> (-> a (-> b c)) (-> (-> a b) (-> a c))))
-)

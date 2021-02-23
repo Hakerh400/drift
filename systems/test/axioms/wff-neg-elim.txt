@@ -1,3 +1,0 @@
-(axiom wff-neg-elim ((pred (~ a)))
-  (pred a)
-)

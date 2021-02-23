@@ -1,4 +1,0 @@
-(theorem neg-s1 ((pred a))
-  (1 (impl-refl (1)) (|- (-> a a)))
-  (2 (neg-r4 1)      (|- (~ (~ (-> a a)))))
-)

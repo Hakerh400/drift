@@ -1,3 +1,0 @@
-(axiom wff-impl-elim2 ((pred (-> a b)))
-  (pred b)
-)

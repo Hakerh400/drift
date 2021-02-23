@@ -1,7 +1,0 @@
-(theorem neg-r11-d ((pred a) (pred b))
-  (1 (wff-neg-intr (1)) (pred (~ a)))
-  (2 (wff-neg-intr 1)   (pred (~ (~ a))))
-  (3 (neg-r10-d 2 (2))  (|- (-> (-> (~ (~ a)) b) (-> (~ (~ a)) (~ (~ b))))))
-  (4 (neg-r1-d (1) (2)) (|- (-> (-> (~ (~ a)) (~ (~ b))) (-> a b))))
-  (5 (impl-tr 3 4)      (|- (-> (-> (~ (~ a)) b) (-> a b))))
-)

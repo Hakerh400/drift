@@ -1,8 +1,0 @@
-(func func-meta-impl-1
-  ((((pair) a b) c)
-    ((pair) (func-meta-impl-2 a c) (func-meta-impl-1 b c))
-  )
-  ((((nil)) a)
-    ((nil))
-  )
-)

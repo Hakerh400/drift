@@ -1,3 +1,0 @@
-(meta meta-impl (a b)
-  (func-meta-impl a b)
-)

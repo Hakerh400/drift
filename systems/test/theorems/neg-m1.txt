@@ -1,7 +1,0 @@
-(theorem neg-m1 ((|- (-> a b)))
-  (1 (wff-infer-elim (1)) (pred (-> a b)))
-  (2 (wff-impl-elim1 1)   (pred a))
-  (3 (wff-impl-elim2 1)   (pred b))
-  (4 (neg-m1-d 2 3)       (|- (-> (-> a b) (-> (~ b) (~ a)))))
-  (5 (mp 4 (1))           (|- (-> (~ b) (~ a))))
-)

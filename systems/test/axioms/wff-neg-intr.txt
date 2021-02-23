@@ -1,3 +1,0 @@
-(axiom wff-neg-intr ((pred a))
-  (pred (~ a))
-)

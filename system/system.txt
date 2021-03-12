@@ -56,8 +56,17 @@ Cons:
 
 cons a b = cons_ a (list b)
 
-map ~t f a:(Nil *) = nil ~t
+map ~t f (Nil *) = nil ~t
 map ~t f (Cons * x xs) = cons (f x) (map ~t f xs)
+
+foldl f z (Nil *) = z
+foldl f z (Cons * x xs) = foldl f (f z x) xs
+
+all f list = foldl (all_1 f) true list
+all_1 f a b = and a (f b)
+
+any f list = foldl (any_1 f) false list
+any_1 f a b = or a (f b)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -177,4 +186,5 @@ th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
 ----------------------------------------------------------------------------------------------------
 
-main = th.prop.impl.refl
+main = all (eq (bool true)) mlist
+mlist = cons (bool true) (cons (bool true) (nil ~Bool))

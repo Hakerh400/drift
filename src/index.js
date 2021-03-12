@@ -137,13 +137,13 @@ const reduce = function*(info){
 
         if(illegalConstructor)
           err(`Function ${
-            O.sf(func.sym.description)} is not allowed to contruct type ${
+            O.sf(func.sym.description)} is not allowed to explicitly contruct type ${
             O.sf(sym.description)}`);
 
         if(O.has(vars, sym)){
           if(!escaped && !O.has(refs, sym))
             errCtx(`Variable ${
-              O.sf(sym.description)} from the case ${
+              O.sf(sym.description)} from case ${
               i + 1} of function ${
               O.sf(func.sym.description)} cannot be referenced in this context`);
 

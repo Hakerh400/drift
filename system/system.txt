@@ -120,16 +120,21 @@ rule.inst a b c = rule.inst_ a (pred b) c
 
 ----------------------------------------------------------------------------------------------------
 
-main = th
+main = th.impl.refl
 
-step_1 = ax.prop.1
-step_2 = ax.prop.2
-step_3 = rule.inst beta alpha step_1
-step_4 = rule.inst beta (impl alpha alpha) step_1
-step_5 = rule.inst beta (impl alpha alpha) step_2
-step_6 = rule.inst gamma alpha step_5
+-- a -> b -> a
+-- a -> (b -> a) -> a
+-- (a -> (b -> a) -> a) -> (a -> b -> a) -> a -> a
+--
+-- (a -> b -> a) -> a -> a
+-- a -> a
 
-step_7 = rule.mp step_6 step_4
-step_8 = rule.mp step_7 step_3
+th.ax1.a.b = ax.prop.1
+th.ax1.a.ba = rule.inst beta (impl beta alpha) th.ax1.a.b
 
-th = step_8
+th.ax2.a.b.c = ax.prop.2
+th.ax2.a.b.a = rule.inst gamma alpha th.ax2.a.b.c
+th.ax2.a.ba.a = rule.inst beta (impl beta alpha) th.ax2.a.b.a
+
+th.impl.ax1ab.refl = rule.mp th.ax2.a.ba.a th.ax1.a.ba
+th.impl.refl = rule.mp th.impl.ax1ab.refl th.ax1.a.b

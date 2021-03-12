@@ -86,12 +86,14 @@ class Database{
 
   toString(){
     return this.table.map(info => {
-      const {expr, reducedTo} = info;
+      const {index, expr, reducedTo} = info;
+      assert(reducedTo !== null);
 
       const exprStr = isSym(expr) ? expr.description : O.sfa(expr.map(a => a.index));
-      const reducedStr = reducedTo !== null ? ` ---> ${reducedTo.index}` : '';
+      const ri = reducedTo.index;
+      const reducedStr = ri !== index ? ` ---> ${ri}` : '';
 
-      return `${info.index}: ${exprStr}${reducedStr}`;
+      return `${index}: ${exprStr}${reducedStr}`;
     }).join('\n');
   }
 }

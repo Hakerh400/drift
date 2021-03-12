@@ -8,8 +8,13 @@ True:
 False:
   false = False
 
+id a = a
+dot a b f = a (b f)
+
 not True = false
 not False = true
+
+bnot (Bool a) = bool (not a)
 
 or True * = true
 or False a = a
@@ -19,6 +24,9 @@ and True a = a
 
 eq a a = true
 eq * * = false
+
+ite True a b = a
+ite False a b = b
 
 ----------------------------------------------------------------------------------------------------
 
@@ -46,7 +54,10 @@ Nil:
 Cons:
   cons_ a:(t *) (List ~t b) = Cons ~t a b
 
-const a b = cons_ a (list b)
+cons a b = cons_ a (list b)
+
+map ~t f a:(Nil *) = nil ~t
+map ~t f (Cons * x xs) = cons (f x) (map ~t f xs)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -78,18 +89,19 @@ pnot a = pnot_ (pred a)
 forall a b = forall_ (nat a) (pred b)
 pelem a b = pelem_ (nat a) (nat b)
 
-alpha = pident zero
-beta = nextPident alpha
-gamma = nextPident beta
+a. = pident zero
+b. = nextPident a.
+c. = nextPident b.
+d. = nextPident c.
 
 nextPident (Pident a) = pident (succ a)
 
-substPident ident p ident = p
-substPident ident p a:(Pident *) = a
-substPident ident p (Impl a b) = impl (substPident ident p a) (substPident ident p b)
-substPident ident p (Pnot a) = pnot (substPident ident p a)
-substPident ident p (Forall a b) = forall a (substPident ident p b)
-substPident ident p a:(Pelem * *) = a
+substPident pident:(Pident *) p pident = p
+substPident pident:(Pident *) p a:(Pident *) = a
+substPident pident:(Pident *) p (Impl a b) = impl (substPident pident p a) (substPident pident p b)
+substPident pident:(Pident *) p (Pnot a) = pnot (substPident pident p a)
+substPident pident:(Pident *) p (Forall a b) = forall a (substPident pident p b)
+substPident pident:(Pident *) p a:(Pelem * *) = a
 
 substIdent ident1 ident2 (Impl a b) = impl (substIdent ident1 ident2 a) (substIdent ident1 ident2 b)
 substIdent ident1 ident2 (Pnot a) = pnot (substIdent ident1 ident2 a)
@@ -100,11 +112,23 @@ substIdent ident1 ident2 (Pelem a b) = pelem (replaceIdent ident1 ident2 a) (rep
 replaceIdent ident1 ident2 ident1 = ident2
 replaceIdent ident1 ident2 * = ident1
 
+hasPident pident:(Pident *) pident = true
+hasPident pident:(Pident *) (Pident *) = false
+hasPident pident:(Pident *) (Impl a b) = or (hasPident pident a) (hasPident pident b)
+hasPident pident:(Pident *) (Pnot a) = hasPident pident a
+hasPident pident:(Pident *) (Forall * a) = hasPident pident a
+hasPident pident:(Pident *) (Pelem a b) = false
+
 hasFreeIdent ident (Impl a b) = or (hasFreeIdent ident a) (hasFreeIdent ident b)
 hasFreeIdent ident (Pnot a) = hasFreeIdent ident a
 hasFreeIdent ident (Forall ident *) = false
 hasFreeIdent ident (Forall * a) = hasFreeIdent ident a
 hasFreeIdent ident (Pelem a b) = or (eq a ident) (eq b ident)
+
+nextAvailPident p pident = ite (hasPident pident p)
+  nextAvailPident_1 nextAvailPident_2 p pident
+nextAvailPident_1 p pident = nextAvailPident p (nextPident pident)
+nextAvailPident_2 p pident = pident
 
 ----------------------------------------------------------------------------------------------------
 
@@ -112,29 +136,45 @@ Proof:
   rule.inst_ ident:(Pident *) (Pred p) (Proof phi) = Proof (substPident ident p phi)
   rule.mp (Proof (Impl a b)) (Proof a) = Proof b
 
-  ax.prop.1 = Proof (impl alpha (impl beta alpha))
-  ax.prop.2 = Proof (impl (impl alpha (impl beta gamma)) (impl (impl alpha beta) (impl alpha gamma)))
-  ax.prop.3 = Proof (impl (impl (pnot alpha) (pnot beta)) (impl beta alpha))
+  ax.prop.1 = Proof (impl a. (impl b. a.))
+  ax.prop.2 = Proof (impl (impl a. (impl b. c.)) (impl (impl a. b.) (impl a. c.)))
+  ax.prop.3 = Proof (impl (impl (pnot a.) (pnot b.)) (impl b. a.))
 
 rule.inst a b c = rule.inst_ a (pred b) c
 
 ----------------------------------------------------------------------------------------------------
 
-main = th.impl.refl
+proof2pred (Proof a) = a
+
+----------------------------------------------------------------------------------------------------
+
+-- util.prop.sup.add sup proof = rule.mp
+--   (rule.inst th.prop.ax1.a.b)
+--   proof
+
+----------------------------------------------------------------------------------------------------
 
 -- a -> b -> a
+th.prop.ax1.a.b = ax.prop.1
+
 -- a -> (b -> a) -> a
+th.prop.ax1.a.ba = rule.inst b. (impl b. a.) th.prop.ax1.a.b
+
+-- (a -> b -> c) -> (a -> b) -> a -> c
+th.prop.ax2.a.b.c = ax.prop.2
+
+-- (a -> b -> a) -> (a -> b) -> a -> a
+th.prop.ax2.a.b.a = rule.inst c. a. th.prop.ax2.a.b.c
+
 -- (a -> (b -> a) -> a) -> (a -> b -> a) -> a -> a
---
+th.prop.ax2.a.ba.a = rule.inst b. (impl b. a.) th.prop.ax2.a.b.a
+
 -- (a -> b -> a) -> a -> a
+th.prop.impl.ax1ab.refl = rule.mp th.prop.ax2.a.ba.a th.prop.ax1.a.ba
+
 -- a -> a
+th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
-th.ax1.a.b = ax.prop.1
-th.ax1.a.ba = rule.inst beta (impl beta alpha) th.ax1.a.b
+----------------------------------------------------------------------------------------------------
 
-th.ax2.a.b.c = ax.prop.2
-th.ax2.a.b.a = rule.inst gamma alpha th.ax2.a.b.c
-th.ax2.a.ba.a = rule.inst beta (impl beta alpha) th.ax2.a.b.a
-
-th.impl.ax1ab.refl = rule.mp th.ax2.a.ba.a th.ax1.a.ba
-th.impl.refl = rule.mp th.impl.ax1ab.refl th.ax1.a.b
+main = th.prop.impl.refl

@@ -215,4 +215,5 @@ const error = msg => {
 module.exports = {
   reduceIdent,
   info2str,
+  db,
 };

@@ -1,0 +1,135 @@
+Bool:
+  bool a:True = Bool a
+  bool a:False = Bool a
+
+True:
+  true = True
+
+False:
+  false = False
+
+not True = false
+not False = true
+
+or True * = true
+or False a = a
+
+and False * = false
+and True a = a
+
+eq a a = true
+eq * * = false
+
+----------------------------------------------------------------------------------------------------
+
+Nat:
+  nat a:Zero = Nat a
+  nat a:(Succ *) = Nat a
+
+Zero:
+  zero = Zero
+
+Succ:
+  succ_ (Nat a) = Succ a
+
+succ a = succ_ (nat a)
+
+----------------------------------------------------------------------------------------------------
+
+List:
+  list a:(Nil ~t) = List ~t a
+  list a:(Cons ~t * *) = List ~t a
+
+Nil:
+  nil ~t = Nil ~t
+
+Cons:
+  cons_ a:(t *) (List ~t b) = Cons ~t a b
+
+const a b = cons_ a (list b)
+
+----------------------------------------------------------------------------------------------------
+
+Pred:
+  pred a:(Pident *) = Pred a
+  pred a:(Impl * *) = Pred a
+  pred a:(Pnot *) = Pred a
+  pred a:(Forall * *) = Pred a
+  pred a:(Pelem * *) = Pred a
+
+Pident:
+  pident_ (Nat a) = Pident a
+
+Impl:
+  impl_ (Pred a) (Pred b) = Impl a b
+
+Pnot:
+  pnot_ (Pred a) = Pnot a
+
+Forall:
+  forall_ (Nat a) (Pred b) = Forall a b
+
+Pelem:
+  pelem_ (Nat a) (Nat b) = Pelem a b
+
+pident a = pident_ (nat a)
+impl a b = impl_ (pred a) (pred b)
+pnot a = pnot_ (pred a)
+forall a b = forall_ (nat a) (pred b)
+pelem a b = pelem_ (nat a) (nat b)
+
+alpha = pident zero
+beta = nextPident alpha
+gamma = nextPident beta
+
+nextPident (Pident a) = pident (succ a)
+
+substPident ident p ident = p
+substPident ident p a:(Pident *) = a
+substPident ident p (Impl a b) = impl (substPident ident p a) (substPident ident p b)
+substPident ident p (Pnot a) = pnot (substPident ident p a)
+substPident ident p (Forall a b) = forall a (substPident ident p b)
+substPident ident p a:(Pelem * *) = a
+
+substIdent ident1 ident2 (Impl a b) = impl (substIdent ident1 ident2 a) (substIdent ident1 ident2 b)
+substIdent ident1 ident2 (Pnot a) = pnot (substIdent ident1 ident2 a)
+substIdent ident1 ident2 x:(Forall ident1 b) = x
+substIdent ident1 ident2 (Forall a b) = forall a (substIdent ident1 ident2 b)
+substIdent ident1 ident2 (Pelem a b) = pelem (replaceIdent ident1 ident2 a) (replaceIdent ident1 ident2 b)
+
+replaceIdent ident1 ident2 ident1 = ident2
+replaceIdent ident1 ident2 * = ident1
+
+hasFreeIdent ident (Impl a b) = or (hasFreeIdent ident a) (hasFreeIdent ident b)
+hasFreeIdent ident (Pnot a) = hasFreeIdent ident a
+hasFreeIdent ident (Forall ident *) = false
+hasFreeIdent ident (Forall * a) = hasFreeIdent ident a
+hasFreeIdent ident (Pelem a b) = or (eq a ident) (eq b ident)
+
+----------------------------------------------------------------------------------------------------
+
+Proof:
+  rule.inst_ ident:(Pident *) (Pred p) (Proof phi) = Proof (substPident ident p phi)
+  rule.mp (Proof (Impl a b)) (Proof a) = Proof b
+
+  ax.prop.1 = Proof (impl alpha (impl beta alpha))
+  ax.prop.2 = Proof (impl (impl alpha (impl beta gamma)) (impl (impl alpha beta) (impl alpha gamma)))
+  ax.prop.3 = Proof (impl (impl (pnot alpha) (pnot beta)) (impl beta alpha))
+
+rule.inst a b c = rule.inst_ a (pred b) c
+
+----------------------------------------------------------------------------------------------------
+
+main = th
+
+step_1 = ax.prop.1
+step_2 = ax.prop.2
+step_3 = rule.inst beta alpha step_1
+step_4 = rule.inst beta (impl alpha alpha) step_1
+step_5 = rule.inst beta (impl alpha alpha) step_2
+step_6 = rule.inst gamma alpha step_5
+
+step_7 = rule.mp step_6 step_4
+step_8 = rule.mp step_7 step_3
+
+th = step_8

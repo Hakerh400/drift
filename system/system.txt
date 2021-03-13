@@ -186,4 +186,5 @@ th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
 ----------------------------------------------------------------------------------------------------
 
-main = th.prop.impl.refl
+main = func ~func
+func (a *) = ~a

@@ -7,6 +7,8 @@ const O = require('omikron');
 const Info = require('./info');
 const ident2sym = require('./ident2sym');
 
+const SYM_CHAR = ':';
+
 const cwd = __dirname;
 
 const dbDir = path.join(cwd, '../database');
@@ -20,7 +22,7 @@ class Database{
 
     O.sanl(O.rfs(tableFile, 1)).forEach((line, index) => {
       const parts = line.split(' ');
-      const isSym = parts[0][0] === '`';
+      const isSym = parts[0][0] === SYM_CHAR;
       const reducedOffset = isSym ? 1 : 2;
 
       const expr = isSym ?
@@ -133,7 +135,7 @@ class Database{
       assert(reducedTo !== null);
 
       return [
-        ...isSym(expr) ? [`\`${expr.description}`] : [expr[0].index, expr[1].index],
+        ...isSym(expr) ? [SYM_CHAR + expr.description] : [expr[0].index, expr[1].index],
         ...reducedTo === info ? [] : [reducedTo.index],
       ].join(' ');
     }).join('\n').slice(1));

@@ -1,3 +1,28 @@
+id a = a
+
+dot a b c = a (b c)
+dot2 a b c d = a (b c d)
+
+b1 a * = a
+b0 * a = a
+
+extract (* a) = a
+
+----------------------------------------------------------------------------------------------------
+
+Wrap:
+  wrap a = Wrap a
+
+----------------------------------------------------------------------------------------------------
+
+Pair:
+  pair a b = Pair a b
+
+fst (Pair a *) = a
+snd (Pair * a) = a
+
+----------------------------------------------------------------------------------------------------
+
 Bool:
   bool a:True = Bool a
   bool a:False = Bool a
@@ -7,9 +32,6 @@ True:
 
 False:
   false = False
-
-id a = a
-dot a b f = a (b f)
 
 not True = false
 not False = true
@@ -25,8 +47,8 @@ and True a = a
 eq a a = true
 eq * * = false
 
-ite True a b = a
-ite False a b = b
+ite True = b1
+ite False = b0
 
 ----------------------------------------------------------------------------------------------------
 
@@ -42,6 +64,9 @@ Succ:
 
 succ a = succ_ (nat a)
 
+for f z Zero = z
+for f z (Succ a) = f (for f z a)
+
 ----------------------------------------------------------------------------------------------------
 
 List:
@@ -56,17 +81,31 @@ Cons:
 
 cons a b = cons_ a (list b)
 
+head (Cons * a *) = a
+tail (Cons * * a) = a
+
+singleton a:(t *) = cons a (nil ~t)
+
 map ~t f (Nil *) = nil ~t
 map ~t f (Cons * x xs) = cons (f x) (map ~t f xs)
 
 foldl f z (Nil *) = z
 foldl f z (Cons * x xs) = foldl f (f z x) xs
 
+foldr f z (Nil *) = z
+foldr f z (Cons * x xs) = f x (foldr f z xs)
+
+length = foldl (dot2 succ b1) zero
+
 all f list = foldl (all_1 f) true list
 all_1 f a b = and a (f b)
 
 any f list = foldl (any_1 f) false list
 any_1 f a b = or a (f b)
+
+rawList ~t f = rawList_ f (nil ~t)
+rawList_ f list &nil = list
+rawList_ f list a = rawList_ f (cons (f a) list)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -134,10 +173,17 @@ hasFreeIdent ident (Forall ident *) = false
 hasFreeIdent ident (Forall * a) = hasFreeIdent ident a
 hasFreeIdent ident (Pelem a b) = or (eq a ident) (eq b ident)
 
-nextAvailPident p pident = ite (hasPident pident p)
-  nextAvailPident_1 nextAvailPident_2 p pident
-nextAvailPident_1 p pident = nextAvailPident p (nextPident pident)
-nextAvailPident_2 p pident = pident
+nextAvailPident pident (Nil ~Pred) = pident
+nextAvailPident pident list:(Cons ~Pred * *) = ite (any (nextAvailPident_1 pident) list)
+  nextAvailPident_2 nextAvailPident_3 pident list
+nextAvailPident_1 pident (Pred p) = hasPident pident p
+nextAvailPident_2 pident p = nextAvailPident (nextPident pident) p
+nextAvailPident_3 pident p = pident
+
+availPidentsList list Zero = nil ~Pident
+availPidentsList list (Succ a) = cons
+  (nextAvailPident a. list)
+  (availPidentsList (cons (pred (nextAvailPident a. list)) list) a)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -151,13 +197,17 @@ Proof:
 
 rule.inst a b c = rule.inst_ a (pred b) c
 
-----------------------------------------------------------------------------------------------------
-
-proof2pred (Proof a) = a
+proof2pred (Proof a) = pred a
 
 ----------------------------------------------------------------------------------------------------
 
--- util.prop.sup.add sup proof = rule.mp
+util.prop.inst proof list = util.prop.inst_availPidents proof list
+util.prop.inst_availPidents proof list = availPidentsList
+  (foldl util.prop.inst_availPidents_1 (singleton (proof2pred proof)) list)
+  (length list)
+util.prop.inst_availPidents_1 list (Wrap (Pair pident p)) = cons (pred pident) (cons (pred p) list)
+
+-- util.prop.sup.add proof sup = rule.mp
 --   (rule.inst th.prop.ax1.a.b)
 --   proof
 
@@ -186,5 +236,8 @@ th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
 ----------------------------------------------------------------------------------------------------
 
-main = func ~func
-func (a *) = ~a
+main = util.prop.inst th.prop.impl.refl mlist
+
+mlist = rawList ~Wrap wrap
+  (pair a. a.)
+  nil

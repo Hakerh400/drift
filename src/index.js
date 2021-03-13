@@ -8,6 +8,7 @@ const parser = require('./parser');
 const Database = require('./database');
 const Info = require('./info');
 const cs = require('./ctors');
+const ident2sym = require('./ident2sym');
 
 const {tilde} = parser;
 const {isSym, isPair} = Database;
@@ -217,4 +218,5 @@ module.exports = {
   info2str,
   db,
   Database,
+  ident2sym,
 };

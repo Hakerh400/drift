@@ -216,4 +216,5 @@ module.exports = {
   reduceIdent,
   info2str,
   db,
+  Database,
 };

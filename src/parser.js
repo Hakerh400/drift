@@ -6,6 +6,7 @@ const assert = require('assert');
 const O = require('omikron');
 const tokenizer = require('./tokenizer');
 const cs = require('./ctors');
+const ident2sym = require('./ident2sym');
 
 const {
   tokenize,
@@ -16,7 +17,9 @@ const {
   err,
 } = tokenizer;
 
-const tilde = Symbol('~');
+const ident2symFunc = ident2sym;
+
+const tilde = ident2sym('~');
 
 const parse = str => {
   const objIdentSym = O.obj();
@@ -29,7 +32,7 @@ const parse = str => {
     if(hasIdent(ident))
       return objIdentSym[ident];
 
-    const sym = ident === '~' ? tilde : Symbol(ident);
+    const sym = ident === '~' ? tilde : ident2symFunc(ident);
     objIdentSym[ident] = sym;
 
     return sym;

@@ -5,9 +5,48 @@ const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
 const Info = require('./info');
+const ident2sym = require('./ident2sym');
+
+const cwd = __dirname;
+
+const dbDir = path.join(cwd, '../database');
+const tableFile = path.join(dbDir, 'table.txt');
 
 class Database{
-  table = [];
+  static load(){
+    const db = new Database();
+    const {table} = db;
+    const reductions = [null];
+
+    O.sanl(O.rfs(tableFile, 1)).forEach((line, index) => {
+      const parts = line.split(' ');
+      const isSym = parts[0][0] === '`';
+      const reducedOffset = isSym ? 1 : 2;
+
+      const expr = isSym ?
+        ident2sym(parts[0].slice(1)) :
+        [table[parts[0] | 0], table[parts[1] | 0]];
+
+      const info = db.getInfo(expr);
+      const reducedIndex = parts.length === reducedOffset ?
+        index :
+        parts[reducedOffset] | 0;
+
+      reductions.push(reducedIndex);
+
+      return info;
+    });
+
+    reductions.forEach((r, i) => {
+      if(r === null) return;
+
+      db.reduce(table[i], table[r], 0);
+    });
+
+    return db;
+  }
+
+  table = [null];
 
   syms = O.obj();
   pairs = O.obj();
@@ -40,10 +79,10 @@ class Database{
     return pairs[fsti][sndi] = info;
   }
 
-  reduce(from, to){
+  reduce(from, to, strict=1){
     assert(from.reducedTo === null);
 
-    if(from !== to)
+    if(strict && from !== to)
       assert(to.reducedTo === to);
 
     from.reducedTo = to;
@@ -84,17 +123,20 @@ class Database{
     return info;
   }
 
-  toString(){
-    return this.table.map(info => {
-      const {index, expr, reducedTo} = info;
+  save(){
+    const {table} = this;
+
+    O.wfs(tableFile, table.map(info => {
+      if(info === null) return '';
+
+      const {expr, reducedTo} = info;
       assert(reducedTo !== null);
 
-      const exprStr = isSym(expr) ? expr.description : O.sfa(expr.map(a => a.index));
-      const ri = reducedTo.index;
-      const reducedStr = ri !== index ? ` ---> ${ri}` : '';
-
-      return `${index}: ${exprStr}${reducedStr}`;
-    }).join('\n');
+      return [
+        ...isSym(expr) ? [`\`${expr.description}`] : [expr[0].index, expr[1].index],
+        ...reducedTo === info ? [] : [reducedTo.index],
+      ].join(' ');
+    }).join('\n').slice(1));
   }
 }
 

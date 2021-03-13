@@ -186,5 +186,4 @@ th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
 ----------------------------------------------------------------------------------------------------
 
-main = all (eq (bool true)) mlist
-mlist = cons (bool true) (cons (bool true) (nil ~Bool))
+main = th.prop.impl.refl

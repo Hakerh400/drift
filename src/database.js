@@ -20,24 +20,28 @@ class Database{
     const {table} = db;
     const reductions = [null];
 
-    O.sanl(O.rfs(tableFile, 1)).forEach((line, index) => {
-      const parts = line.split(' ');
-      const isSym = parts[0][0] === SYM_CHAR;
-      const reducedOffset = isSym ? 1 : 2;
+    const str = O.rfs(tableFile, 1);
 
-      const expr = isSym ?
-        ident2sym(parts[0].slice(1)) :
-        [table[parts[0] | 0], table[parts[1] | 0]];
+    if(str.length !== 0){
+      O.sanl(str).forEach((line, index) => {
+        const parts = line.split(' ');
+        const isSym = parts[0][0] === SYM_CHAR;
+        const reducedOffset = isSym ? 1 : 2;
 
-      const info = db.getInfo(expr);
-      const reducedIndex = parts.length === reducedOffset ?
-        index :
-        parts[reducedOffset] | 0;
+        const expr = isSym ?
+          ident2sym(parts[0].slice(1)) :
+          [table[parts[0] | 0], table[parts[1] | 0]];
 
-      reductions.push(reducedIndex);
+        const info = db.getInfo(expr);
+        const reducedIndex = parts.length === reducedOffset ?
+          index + 1 :
+          parts[reducedOffset] | 0;
 
-      return info;
-    });
+        reductions.push(reducedIndex);
+
+        return info;
+      });
+    }
 
     reductions.forEach((r, i) => {
       if(r === null) return;
@@ -52,6 +56,46 @@ class Database{
 
   syms = O.obj();
   pairs = O.obj();
+
+  hasExpr(expr){
+    if(isSym(expr))
+      return O.has(this.syms, expr);
+
+    const {pairs} = this;
+    const [fst, snd] = expr;
+    const fsti = fst.index;
+    const sndi = snd.index;
+
+    return O.has(pairs, fsti) && O.has(pairs[fsti], sndi);
+  }
+
+  insert(info){
+    const db = this;
+    const map = new Map();
+
+    const insert = function*(info){
+      if(map.has(info))
+        return map.get(info);
+
+      const {expr} = info;
+
+      if(isSym(expr)){
+        const infoNew = db.getInfoStruct(expr);
+
+        map.set(info, infoNew);
+        return infoNew;
+      }
+
+      const fst = yield [insert, expr[0]];
+      const snd = yield [insert, expr[1]];
+      const infoNew = db.getInfoStruct([fst, snd]);
+
+      map.set(info, infoNew);
+      return infoNew;
+    };
+
+    O.rec(insert, info);
+  }
 
   getInfo(expr){
     if(isSym(expr)){
@@ -79,6 +123,16 @@ class Database{
 
     const info = this.infoFromExpr(expr);
     return pairs[fsti][sndi] = info;
+  }
+
+  getInfoStruct(expr){
+    const hasExpr = this.hasExpr(expr);
+    const info = this.getInfo(expr);
+
+    if(!hasExpr)
+      this.reduceToItself(info);
+
+    return info;
   }
 
   reduce(from, to, strict=1){

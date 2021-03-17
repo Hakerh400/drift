@@ -10,11 +10,6 @@ extract (* a) = a
 
 ----------------------------------------------------------------------------------------------------
 
-Wrap:
-  wrap a = Wrap a
-
-----------------------------------------------------------------------------------------------------
-
 Pair:
   pair a b = Pair a b
 
@@ -22,10 +17,6 @@ fst (Pair a *) = a
 snd (Pair * a) = a
 
 ----------------------------------------------------------------------------------------------------
-
-Bool:
-  bool a:True = Bool a
-  bool a:False = Bool a
 
 True:
   true = True
@@ -35,8 +26,6 @@ False:
 
 not True = false
 not False = true
-
-bnot (Bool a) = bool (not a)
 
 or True * = true
 or False a = a
@@ -52,48 +41,50 @@ ite False = b0
 
 ----------------------------------------------------------------------------------------------------
 
-Nat:
-  nat a:Zero = Nat a
-  nat a:(Succ *) = Nat a
-
 Zero:
   zero = Zero
 
 Succ:
-  succ_ (Nat a) = Succ a
-
-succ a = succ_ (nat a)
+  succ a = Succ a
 
 for f z Zero = z
 for f z (Succ a) = f (for f z a)
 
 ----------------------------------------------------------------------------------------------------
 
-List:
-  list a:(Nil ~t) = List ~t a
-  list a:(Cons ~t * *) = List ~t a
+Strict.Nat:
+  strict.nat a:Strict.Zero = Strict.Nat a
+  strict.nat a:(Strict.Succ *) = Strict.Nat a
+
+Strict.Zero:
+  strict.zero = Strict.Zero
+
+Strict.Succ:
+  strict.succ_ (Strict.Nat a) = Strict.Succ a
+
+strict.succ a = strict.succ_ (strict.nat a)
+
+----------------------------------------------------------------------------------------------------
 
 Nil:
-  nil ~t = Nil ~t
+  nil = Nil
 
 Cons:
-  cons_ a:(t *) (List ~t b) = Cons ~t a b
-
-cons a b = cons_ a (list b)
+  cons a b = Cons a b
 
 head (Cons * a *) = a
 tail (Cons * * a) = a
 
-singleton a:(t *) = cons a (nil ~t)
+singleton a = cons a nil
 
-map ~t f (Nil *) = nil ~t
-map ~t f (Cons * x xs) = cons (f x) (map ~t f xs)
+map f Nil = nil
+map f (Cons x xs) = cons (f x) (map f xs)
 
-foldl f z (Nil *) = z
-foldl f z (Cons * x xs) = foldl f (f z x) xs
+foldl f z Nil = z
+foldl f z (Cons x xs) = foldl f (f z x) xs
 
-foldr f z (Nil *) = z
-foldr f z (Cons * x xs) = f x (foldr f z xs)
+foldr f z Nil = z
+foldr f z (Cons x xs) = f x (foldr f z xs)
 
 length = foldl (dot2 succ b1) zero
 
@@ -103,9 +94,9 @@ all_1 f a b = and a (f b)
 any f list = foldl (any_1 f) false list
 any_1 f a b = or a (f b)
 
-rawList ~t f = rawList_ f (nil ~t)
-rawList_ f list &nil = list
-rawList_ f list a = rawList_ f (cons (f a) list)
+rawList = rawList_ nil
+rawList_ list Nil = list
+rawList_ list a = rawList_ (cons a list)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -117,7 +108,7 @@ Pred:
   pred a:(Pelem * *) = Pred a
 
 Pident:
-  pident_ (Nat a) = Pident a
+  pident_ (Strict.Nat a) = Pident a
 
 Impl:
   impl_ (Pred a) (Pred b) = Impl a b
@@ -126,23 +117,23 @@ Pnot:
   pnot_ (Pred a) = Pnot a
 
 Forall:
-  forall_ (Nat a) (Pred b) = Forall a b
+  forall_ (Strict.Nat a) (Pred b) = Forall a b
 
 Pelem:
-  pelem_ (Nat a) (Nat b) = Pelem a b
+  pelem_ (Strict.Nat a) (Strict.Nat b) = Pelem a b
 
-pident a = pident_ (nat a)
+pident a = pident_ (strict.nat a)
 impl a b = impl_ (pred a) (pred b)
 pnot a = pnot_ (pred a)
-forall a b = forall_ (nat a) (pred b)
-pelem a b = pelem_ (nat a) (nat b)
+forall a b = forall_ (strict.nat a) (pred b)
+pelem a b = pelem_ (strict.nat a) (strict.nat b)
 
-a. = pident zero
+a. = pident strict.zero
 b. = nextPident a.
 c. = nextPident b.
 d. = nextPident c.
 
-nextPident (Pident a) = pident (succ a)
+nextPident (Pident a) = pident (strict.succ a)
 
 substPident pident:(Pident *) p pident = p
 substPident pident:(Pident *) p a:(Pident *) = a
@@ -201,16 +192,6 @@ proof2pred (Proof a) = pred a
 
 ----------------------------------------------------------------------------------------------------
 
-util.prop.inst proof list = util.prop.inst_availPidents proof list
-util.prop.inst_availPidents proof list = availPidentsList
-  (foldl util.prop.inst_availPidents_1 (singleton (proof2pred proof)) list)
-  (length list)
-util.prop.inst_availPidents_1 list (Wrap (Pair pident p)) = cons (pred pident) (cons (pred p) list)
-
--- util.prop.sup.add proof sup = rule.mp
---   (rule.inst th.prop.ax1.a.b)
---   proof
-
 ----------------------------------------------------------------------------------------------------
 
 -- a -> b -> a
@@ -236,8 +217,4 @@ th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
 ----------------------------------------------------------------------------------------------------
 
-main = util.prop.inst th.prop.impl.refl mlist
-
-mlist = rawList ~Wrap wrap
-  (pair a. a.)
-  nil
+main = th.prop.ax1.a.b

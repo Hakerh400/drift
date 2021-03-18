@@ -253,8 +253,9 @@ util.infer proofImpl:(Proof (Impl a b)) proofPremise = rule.mp
   (util.inst proofImpl (autoPidentPredPairs a (extract proofPremise)))
   proofPremise
 
-util.infer.mp = util.infer th.prop.ax2.a.b.c
+util.infer.ax2 = util.infer th.prop.ax2.a.b.c
 util.infer.mpt = util.infer th.prop.mpt
+util.infer.reord = util.infer th.prop.reord
 
 util.mid proof:(Proof (Impl a b)) c = rule.mp
   (util.inst th.prop.mid (rawList (pair a. a) (pair b. b) (pair c. c) nil))
@@ -265,6 +266,10 @@ util.mid2 proof a b = util.mid
   a
 
 util.impl.refl = rule.inst th.prop.impl.refl a.
+
+util.mp proof1:(Proof (Impl a (Impl b c))) proof2:(Proof (Impl a b)) = rule.mp
+  (util.infer.ax2 proof1)
+  proof2
 
 ----------------------------------------------------------------------------------------------------
 
@@ -304,17 +309,17 @@ th.prop.ab.bc.aa = util.addSup2
 th.prop.ab.ab = util.impl.refl (impl a. b.)
 
 -- (a -> b) -> a -> b -> c -> b
-th.prop.ab.a.bcb = util.addSup2
+th.prop.ab.ab.cb = util.addSup2
   (util.ax1 b. c.)
   (impl a. b.)
   a.
 
 -- (a -> b) -> (a -> b) -> a -> c -> b
-th.prop.ab.ab.acb = util.infer.mpt th.prop.ab.a.bcb
+th.prop.ab.ab.acb = util.infer.mpt th.prop.ab.ab.cb
 
 -- (a -> b) -> a -> c -> b
 th.prop.mid = rule.mp
-  (util.infer.mp th.prop.ab.ab.acb)
+  (util.infer.ax2 th.prop.ab.ab.acb)
   th.prop.ab.ab
 
 -- (a -> b) -> (b -> c) -> a -> a -> b
@@ -333,7 +338,7 @@ th.prop.ab.bc.abc = util.addSup
 
 -- (a -> b) -> (b -> c) -> a -> c
 th.prop.bc.ab.ac = rule.mp
-  (util.infer.mp (util.addSup
+  (util.infer.ax2 (util.addSup
     th.prop.ax2.a.b.c
     (impl b. c.)))
   (util.ax1 (impl b. c.) a.)
@@ -342,6 +347,28 @@ th.prop.bc.ab.ac = rule.mp
 th.prop.ab.ca.cb = util.infer.mpt
   (util.ax1 (impl a. b.) c.)
 
+-- (a -> b -> c) -> b -> (a -> b) -> a -> c
+th.prop.abc.b.ab.ac = util.mid
+  (util.ax2 a. b. c.)
+  b.
+
+-- (a -> b -> c) -> (b -> a -> b) -> b -> a -> c
+th.prop.abc.bab.bac = util.infer.mpt
+  th.prop.abc.b.ab.ac
+
+-- (a -> b -> c) -> b -> a -> c
+th.prop.reord = util.mp
+  th.prop.abc.bab.bac
+  (util.addSup (util.ax1 b. a.) (impl a. (impl b. c.)))
+
+-- a -> (a -> b) -> b
+th.prop.a.ab.b = util.infer.reord th.prop.ab.ab
+
+-- ((a -> a) -> b) -> b
+th.prop.aa.b.b = rule.mp
+  (rule.inst th.prop.a.ab.b a. (impl a. a.))
+  th.prop.impl.refl
+
 ----------------------------------------------------------------------------------------------------
 
-main = th.prop.ab.ca.cb
+main = eq (extract th.prop.aa.b.b) (impl (impl (impl a. a.) b.) b.)

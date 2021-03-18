@@ -265,10 +265,14 @@ util.mid2 proof a b = util.mid
   (util.mid proof b)
   a
 
-util.impl.refl = rule.inst th.prop.impl.refl a.
-
 util.mp proof1:(Proof (Impl a (Impl b c))) proof2:(Proof (Impl a b)) = rule.mp
   (util.infer.ax2 proof1)
+  proof2
+
+util.impl.refl = rule.inst th.prop.impl.refl a.
+
+util.impl.tran proof1:(Proof (Impl a b)) proof2:(Proof (Impl b c)) = rule.mp
+  (rule.mp (util.inst th.prop.impl.tran (rawList (pair a. a) (pair b. b) (pair c. c) nil)) proof1)
   proof2
 
 ----------------------------------------------------------------------------------------------------
@@ -369,6 +373,37 @@ th.prop.aa.b.b = rule.mp
   (rule.inst th.prop.a.ab.b a. (impl a. a.))
   th.prop.impl.refl
 
+-- (a -> b) -> (b -> c) -> c -> a
+th.prop.impl.tran = util.infer.reord th.prop.bc.ab.ac
+
+-- ((a -> b) -> a -> c) -> a -> b -> c
+th.prop.ax2.rev = util.impl.tran
+  (rule.mp
+    (util.infer.reord
+      (util.infer.mpt
+        (util.ax1
+          (impl (impl a. b.) (impl a. c.))
+          b.
+        )
+      )
+    )
+    (util.ax1 b. a.)
+  )
+  (util.inst th.prop.reord (rawList (pair a. b.) (pair b. a.) nil))
+
+-- ((a -> b) -> a -> c) -> a -> b -> c
+------------
+-- ((a -> b) -> a -> c) -> b -> (a -> b) -> a -> c        [AX1: ((a -> b) -> a -> c), b]
+-- ((a -> b) -> a -> c) -> (b -> a -> b) -> b -> a -> c   [MPT]
+-- (b -> a -> b) -> ((a -> b) -> a -> c) -> b -> a -> c   [REORD]
+-- ((a -> b) -> a -> c) -> b -> a -> c                    [MP]
+-- (b -> a -> c) -> a -> b -> c                           [REORD (INST)]
+-- ((a -> b) -> a -> c) -> a -> b -> c                    [TRAN]
+
 ----------------------------------------------------------------------------------------------------
 
-main = eq (extract th.prop.aa.b.b) (impl (impl (impl a. a.) b.) b.)
+main = eq
+  (extract th.prop.ax2.rev)
+  (func (extract ax.prop.2))
+
+func (Impl a b) = impl b a

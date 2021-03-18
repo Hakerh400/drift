@@ -383,22 +383,9 @@ th.prop.ax2.rev = util.impl.tran
       (util.infer.mpt
         (util.ax1
           (impl (impl a. b.) (impl a. c.))
-          b.
-        )
-      )
-    )
-    (util.ax1 b. a.)
-  )
+          b.)))
+    (util.ax1 b. a.))
   (util.inst th.prop.reord (rawList (pair a. b.) (pair b. a.) nil))
-
--- ((a -> b) -> a -> c) -> a -> b -> c
-------------
--- ((a -> b) -> a -> c) -> b -> (a -> b) -> a -> c        [AX1: ((a -> b) -> a -> c), b]
--- ((a -> b) -> a -> c) -> (b -> a -> b) -> b -> a -> c   [MPT]
--- (b -> a -> b) -> ((a -> b) -> a -> c) -> b -> a -> c   [REORD]
--- ((a -> b) -> a -> c) -> b -> a -> c                    [MP]
--- (b -> a -> c) -> a -> b -> c                           [REORD (INST)]
--- ((a -> b) -> a -> c) -> a -> b -> c                    [TRAN]
 
 ----------------------------------------------------------------------------------------------------
 

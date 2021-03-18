@@ -9,8 +9,8 @@ class Info{
   index = null;
   expr = null;
   reducedTo = null;
-  reducedFrom = [];
-  refs = [];
+  // reducedFrom = [];
+  // refs = [];
   baseSym = null;
   argsNum = null;
 }

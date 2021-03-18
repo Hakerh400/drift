@@ -146,7 +146,7 @@ class Database{
       assert(to.reducedTo === to);
 
     from.reducedTo = to;
-    to.reducedFrom.push(from);
+    // to.reducedFrom.push(from);
 
     return to;
   }
@@ -174,8 +174,8 @@ class Database{
       info.baseSym = fst.baseSym;
       info.argsNum = fst.argsNum + 1;
 
-      fst.refs.push(index);
-      if(fst !== snd) snd.refs.push(index);
+      // fst.refs.push(index);
+      // if(fst !== snd) snd.refs.push(index);
     }
 
     table.push(info);

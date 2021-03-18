@@ -10,6 +10,11 @@ extract (* a) = a
 
 ----------------------------------------------------------------------------------------------------
 
+Nil:
+  nil = Nil
+
+----------------------------------------------------------------------------------------------------
+
 Pair:
   pair a b = Pair a b
 
@@ -66,27 +71,19 @@ strict.succ a = strict.succ_ (strict.nat a)
 
 ----------------------------------------------------------------------------------------------------
 
-Nil:
-  nil = Nil
+head (Pair * a *) = a
+tail (Pair * * a) = a
 
-Cons:
-  cons a b = Cons a b
-
-head (Cons * a *) = a
-tail (Cons * * a) = a
-
-singleton a = cons a nil
+singleton a = pair a nil
 
 map f Nil = nil
-map f (Cons x xs) = cons (f x) (map f xs)
+map f (Pair x xs) = pair (f x) (map f xs)
 
 foldl f z Nil = z
-foldl f z (Cons x xs) = foldl f (f z x) xs
+foldl f z (Pair x xs) = foldl f (f z x) xs
 
 foldr f z Nil = z
-foldr f z (Cons x xs) = f x (foldr f z xs)
-
-length = foldl (dot2 succ b1) zero
+foldr f z (Pair x xs) = f x (foldr f z xs)
 
 all f list = foldl (all_1 f) true list
 all_1 f a b = and a (f b)
@@ -96,7 +93,9 @@ any_1 f a b = or a (f b)
 
 rawList = rawList_ nil
 rawList_ list Nil = list
-rawList_ list a = rawList_ (cons a list)
+rawList_ list a = rawList_ (pair a list)
+
+length = foldl (dot2 succ b1) zero
 
 ----------------------------------------------------------------------------------------------------
 
@@ -151,46 +150,63 @@ substIdent ident1 ident2 (Pelem a b) = pelem (replaceIdent ident1 ident2 a) (rep
 replaceIdent ident1 ident2 ident1 = ident2
 replaceIdent ident1 ident2 * = ident1
 
-hasPident pident:(Pident *) pident = true
-hasPident pident:(Pident *) (Pident *) = false
-hasPident pident:(Pident *) (Impl a b) = or (hasPident pident a) (hasPident pident b)
-hasPident pident:(Pident *) (Pnot a) = hasPident pident a
-hasPident pident:(Pident *) (Forall * a) = hasPident pident a
-hasPident pident:(Pident *) (Pelem a b) = false
+hasPident pident:(Pident *) Nil = false
+hasPident pident:(Pident *) (Pair a b) = or (hasPident pident a) (hasPident pident b)
+hasPident pident:(Pident *) a = hasPident_ pident a
+hasPident_ pident:(Pident *) pident = true
+hasPident_ pident:(Pident *) (Pident *) = false
+hasPident_ pident:(Pident *) (Impl a b) = or (hasPident_ pident a) (hasPident_ pident b)
+hasPident_ pident:(Pident *) (Pnot a) = hasPident_ pident a
+hasPident_ pident:(Pident *) (Forall * a) = hasPident_ pident a
+hasPident_ pident:(Pident *) (Pelem a b) = false
 
-hasFreeIdent ident (Impl a b) = or (hasFreeIdent ident a) (hasFreeIdent ident b)
-hasFreeIdent ident (Pnot a) = hasFreeIdent ident a
-hasFreeIdent ident (Forall ident *) = false
-hasFreeIdent ident (Forall * a) = hasFreeIdent ident a
-hasFreeIdent ident (Pelem a b) = or (eq a ident) (eq b ident)
+hasFreeIdent ident Nil = false
+hasFreeIdent ident (Pair a b) = or (hasFreeIdent ident a) (hasFreeIdent ident b)
+hasFreeIdent ident a = hasFreeIdent_ a
+hasFreeIdent_ ident (Impl a b) = or (hasFreeIdent_ ident a) (hasFreeIdent_ ident b)
+hasFreeIdent_ ident (Pnot a) = hasFreeIdent_ ident a
+hasFreeIdent_ ident (Forall ident *) = false
+hasFreeIdent_ ident (Forall * a) = hasFreeIdent_ ident a
+hasFreeIdent_ ident (Pelem a b) = or (eq a ident) (eq b ident)
 
-nextAvailPident pident (Nil ~Pred) = pident
-nextAvailPident pident list:(Cons ~Pred * *) = ite (any (nextAvailPident_1 pident) list)
-  nextAvailPident_2 nextAvailPident_3 pident list
-nextAvailPident_1 pident (Pred p) = hasPident pident p
-nextAvailPident_2 pident p = nextAvailPident (nextPident pident) p
-nextAvailPident_3 pident p = pident
+availPident expr = availPident_1 a. expr
+availPident_1 pident expr = ite (hasPident pident expr)
+  availPident_2 availPident_3 pident expr
+availPident_2 pident expr = availPident_1 (nextPident pident) expr
+availPident_3 pident expr = pident
 
-availPidentsList list Zero = nil ~Pident
-availPidentsList list (Succ a) = cons
-  (nextAvailPident a. list)
-  (availPidentsList (cons (pred (nextAvailPident a. list)) list) a)
+availPidents expr Zero = nil
+availPidents expr (Succ num) = pair
+  (availPident expr)
+  (availPidents (pair (availPident expr) expr) num)
 
 ----------------------------------------------------------------------------------------------------
 
 Proof:
-  rule.inst_ ident:(Pident *) (Pred p) (Proof phi) = Proof (substPident ident p phi)
+  rule.inst_ (Proof phi) ident:(Pident *) (Pred p) = Proof (substPident ident p phi)
   rule.mp (Proof (Impl a b)) (Proof a) = Proof b
 
   ax.prop.1 = Proof (impl a. (impl b. a.))
   ax.prop.2 = Proof (impl (impl a. (impl b. c.)) (impl (impl a. b.) (impl a. c.)))
   ax.prop.3 = Proof (impl (impl (pnot a.) (pnot b.)) (impl b. a.))
 
-rule.inst a b c = rule.inst_ a (pred b) c
+rule.inst a b c = rule.inst_ a b (pred c)
 
 proof2pred (Proof a) = pred a
 
 ----------------------------------------------------------------------------------------------------
+
+util.inst proof pidentPredPairs = util.inst_1 proof pidentPredPairs
+  (availPidents (extract proof) (length pidentPredPairs))
+util.inst_1 proof pidentPredPairs avails = util.inst_3
+  (util.inst_2 proof pidentPredPairs avails)
+  pidentPredPairs avails
+util.inst_2 proof Nil Nil = proof
+util.inst_2 proof (Pair (Pair pident pred) pidents) (Pair avail avails) =
+  util.inst_2 (rule.inst proof pident avail) pidents avails
+util.inst_3 proof Nil Nil = proof
+util.inst_3 proof (Pair (Pair pident pred) pidents) (Pair avail avails) =
+  util.inst_3 (rule.inst proof avail pred) pidents avails
 
 ----------------------------------------------------------------------------------------------------
 
@@ -198,16 +214,16 @@ proof2pred (Proof a) = pred a
 th.prop.ax1.a.b = ax.prop.1
 
 -- a -> (b -> a) -> a
-th.prop.ax1.a.ba = rule.inst b. (impl b. a.) th.prop.ax1.a.b
+th.prop.ax1.a.ba = rule.inst th.prop.ax1.a.b b. (impl b. a.)
 
 -- (a -> b -> c) -> (a -> b) -> a -> c
 th.prop.ax2.a.b.c = ax.prop.2
 
 -- (a -> b -> a) -> (a -> b) -> a -> a
-th.prop.ax2.a.b.a = rule.inst c. a. th.prop.ax2.a.b.c
+th.prop.ax2.a.b.a = rule.inst th.prop.ax2.a.b.c c. a.
 
 -- (a -> (b -> a) -> a) -> (a -> b -> a) -> a -> a
-th.prop.ax2.a.ba.a = rule.inst b. (impl b. a.) th.prop.ax2.a.b.a
+th.prop.ax2.a.ba.a = rule.inst th.prop.ax2.a.b.a b. (impl b. a.)
 
 -- (a -> b -> a) -> a -> a
 th.prop.impl.ax1ab.refl = rule.mp th.prop.ax2.a.ba.a th.prop.ax1.a.ba
@@ -217,4 +233,4 @@ th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
 ----------------------------------------------------------------------------------------------------
 
-main = th.prop.ax1.a.b
+main = util.inst th.prop.ax1.a.b (pair (pair a. b.) (pair (pair b. a.) nil))

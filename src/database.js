@@ -57,6 +57,10 @@ class Database{
   syms = O.obj();
   pairs = O.obj();
 
+  get size(){
+    return this.table.length;
+  }
+
   hasExpr(expr){
     if(isSym(expr))
       return O.has(this.syms, expr);

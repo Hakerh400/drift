@@ -55,6 +55,9 @@ Succ:
 for f z Zero = z
 for f z (Succ a) = f (for f z a)
 
+unstrict Strict.Zero = zero
+unstrict (Strict.Succ a) = succ (unstrict a)
+
 ----------------------------------------------------------------------------------------------------
 
 Strict.Nat:
@@ -180,6 +183,28 @@ availPidents expr (Succ num) = pair
   (availPident expr)
   (availPidents (pair (availPident expr) expr) num)
 
+autoPidentPredPairs predUni predInst = pidentMap2pairs
+  (makePidentMap predUni predInst nil)
+
+pidentMap2pairs pidentMap = pidentMap2pairs_1 pidentMap a.
+pidentMap2pairs_1 Nil pident = nil
+pidentMap2pairs_1 (Pair Nil rest) pident = pidentMap2pairs_1 rest (nextPident pident)
+pidentMap2pairs_1 (Pair pred rest) pident = pair
+  (pair pident pred)
+  (pidentMap2pairs_1 rest (nextPident pident))
+
+makePidentMap (Pident num) pred pidentMap = addToPidentMap (unstrict num) pred pidentMap
+makePidentMap (Impl a b) (Impl c d) pidentMap = makePidentMap b d (makePidentMap a c pidentMap)
+makePidentMap (Pnot a) (Pnot b) pidentMap = makePidentMap a b pidentMap
+makePidentMap (Forall a b) (Forall a c) pidentMap = makePidentMap b c pidentMap
+makePidentMap (Pelem a b) (Pelem a b) pidentMap = pidentMap
+
+addToPidentMap Zero pred Nil = pair pred nil
+addToPidentMap Zero pred (Pair Nil rest) = pair pred rest
+addToPidentMap Zero pred (Pair pred rest) = pair pred rest
+addToPidentMap (Succ num) pred Nil = pair nil (addToPidentMap num pred nil)
+addToPidentMap (Succ num) pred (Pair a b) = pair a (addToPidentMap num pred b)
+
 ----------------------------------------------------------------------------------------------------
 
 Proof:
@@ -208,22 +233,51 @@ util.inst_3 proof Nil Nil = proof
 util.inst_3 proof (Pair (Pair pident pred) pidents) (Pair avail avails) =
   util.inst_3 (rule.inst proof avail pred) pidents avails
 
+util.ax1 a b = util.inst ax.prop.1 (rawList (pair a. a) (pair b. b) nil)
+util.ax2 a b c = util.inst ax.prop.2 (rawList (pair a. a) (pair b. b) (pair c. c) nil)
+util.ax3 a b = util.inst ax.prop.3 (rawList (pair a. a) (pair b. b) nil)
+
+util.addSup proof sup = rule.mp
+  (util.ax1 (extract proof) sup)
+  proof
+
+util.addSup2 proof sup1 sup2 = util.addSup
+  (util.addSup proof sup2)
+  sup1
+
+util.inst.auto proofUni:(Proof *) predInst = util.inst
+  proofUni
+  (autoPidentPredPairs (extract proofUni) predInst)
+
+util.infer proofImpl:(Proof (Impl a b)) proofPremise = rule.mp
+  (util.inst proofImpl (autoPidentPredPairs a (extract proofPremise)))
+  proofPremise
+
+util.infer.mp = util.infer th.prop.ax2.a.b.c
+util.infer.mpt = util.infer th.prop.mpt
+
+util.infer.mid proof:(Proof (Impl a b)) c = rule.mp
+  (util.inst th.prop.mid (rawList (pair a. a) (pair b. b) (pair c. c) nil))
+  proof
+
+util.impl.refl = rule.inst th.prop.impl.refl a.
+
 ----------------------------------------------------------------------------------------------------
 
 -- a -> b -> a
 th.prop.ax1.a.b = ax.prop.1
 
--- a -> (b -> a) -> a
-th.prop.ax1.a.ba = rule.inst th.prop.ax1.a.b b. (impl b. a.)
-
 -- (a -> b -> c) -> (a -> b) -> a -> c
 th.prop.ax2.a.b.c = ax.prop.2
 
--- (a -> b -> a) -> (a -> b) -> a -> a
-th.prop.ax2.a.b.a = rule.inst th.prop.ax2.a.b.c c. a.
+-- (~a -> ~b) -> b -> a
+th.prop.ax3.a.b = ax.prop.3
+
+-- a -> (b -> a) -> a
+th.prop.ax1.a.ba = util.ax1 a. (impl b. a.)
 
 -- (a -> (b -> a) -> a) -> (a -> b -> a) -> a -> a
-th.prop.ax2.a.ba.a = rule.inst th.prop.ax2.a.b.a b. (impl b. a.)
+th.prop.ax2.a.ba.a = util.ax2 a. (impl b. a.) a.
 
 -- (a -> b -> a) -> a -> a
 th.prop.impl.ax1ab.refl = rule.mp th.prop.ax2.a.ba.a th.prop.ax1.a.ba
@@ -231,6 +285,52 @@ th.prop.impl.ax1ab.refl = rule.mp th.prop.ax2.a.ba.a th.prop.ax1.a.ba
 -- a -> a
 th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
+-- (a -> b -> c -> d) -> a -> (b -> c) -> b -> d
+th.prop.mpt = rule.mp
+  (util.ax2 a. (impl b. (impl c. d.)) (impl (impl b. c.) (impl b. d.)))
+  (util.addSup (util.ax2 b. c. d.) a.)
+
+-- (a -> b) -> (b -> c) -> a -> a
+th.prop.ab.bc.aa = util.addSup2
+  th.prop.impl.refl
+  (impl a. b.)
+  (impl b. c.)
+
+-- (a -> b) -> a -> b
+th.prop.ab.ab = util.impl.refl (impl a. b.)
+
+-- (a -> b) -> a -> b -> c -> b
+th.prop.ab.a.bcb = util.addSup2
+  (util.ax1 b. c.)
+  (impl a. b.)
+  a.
+
+-- (a -> b) -> (a -> b) -> a -> c -> b
+th.prop.ab.ab.a.cb = util.infer.mpt th.prop.ab.a.bcb
+
+-- (a -> b) -> a -> c -> b
+th.prop.mid = rule.mp
+  (util.infer.mp th.prop.ab.ab.a.cb)
+  th.prop.ab.ab
+
+-- (a -> b) -> (b -> c) -> a -> c
+----------
+-- (a -> b) -> (b -> c) -> a -> a
+-- (a -> b) -> (b -> c) -> a -> a -> b
+--   (a -> b) -> (b -> c) -> a -> b
+-- (a -> b) -> (b -> c) -> a -> b -> c
+--   (a -> b) -> (b -> c) -> a -> c
+-- 
+-- 1. ? a -> b
+-- 2.   ? b -> c
+-- 3.     ? a
+-- 4.       b    [1,3]
+-- 5.       c    [2,4]
+-- 6.     a -> c
+-- 7.   (b -> c) -> a -> c
+-- 8. (a -> b) -> (b -> c) -> a -> c
+
+
 ----------------------------------------------------------------------------------------------------
 
-main = util.inst th.prop.ax1.a.b (pair (pair a. b.) (pair (pair b. a.) nil))
+main = th.prop.mid

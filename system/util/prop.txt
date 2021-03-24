@@ -1,0 +1,53 @@
+util.inst proof pidentPredPairs = util.inst_1 proof pidentPredPairs
+  (availPidents (extract proof) (length pidentPredPairs))
+util.inst_1 proof pidentPredPairs avails = util.inst_3
+  (util.inst_2 proof pidentPredPairs avails)
+  pidentPredPairs avails
+util.inst_2 proof Nil Nil = proof
+util.inst_2 proof (Pair (Pair pident pred) pidents) (Pair avail avails) =
+  util.inst_2 (rule.inst proof pident avail) pidents avails
+util.inst_3 proof Nil Nil = proof
+util.inst_3 proof (Pair (Pair pident pred) pidents) (Pair avail avails) =
+  util.inst_3 (rule.inst proof avail pred) pidents avails
+
+util.ax1 a b = util.inst ax.prop.1 (rawList (pair a. a) (pair b. b) nil)
+util.ax2 a b c = util.inst ax.prop.2 (rawList (pair a. a) (pair b. b) (pair c. c) nil)
+util.ax3 a b = util.inst ax.prop.3 (rawList (pair a. a) (pair b. b) nil)
+
+util.addSup proof sup = rule.mp
+  (util.ax1 (extract proof) sup)
+  proof
+
+util.addSup2 proof sup1 sup2 = util.addSup
+  (util.addSup proof sup2)
+  sup1
+
+util.inst.auto proofUni:(Proof *) predInst = util.inst
+  proofUni
+  (autoPidentPredPairs (extract proofUni) predInst)
+
+util.infer proofImpl:(Proof (Impl a b)) proofPremise = rule.mp
+  (util.inst proofImpl (autoPidentPredPairs a (extract proofPremise)))
+  proofPremise
+
+util.infer.ax2 = util.infer th.prop.ax2.a.b.c
+util.infer.mpt = util.infer th.prop.mpt
+util.infer.reord = util.infer th.prop.reord
+
+util.mid proof:(Proof (Impl a b)) c = rule.mp
+  (util.inst th.prop.mid (rawList (pair a. a) (pair b. b) (pair c. c) nil))
+  proof
+
+util.mid2 proof a b = util.mid
+  (util.mid proof b)
+  a
+
+util.mp proof1:(Proof (Impl a (Impl b c))) proof2:(Proof (Impl a b)) = rule.mp
+  (util.infer.ax2 proof1)
+  proof2
+
+util.impl.refl = rule.inst th.prop.impl.refl a.
+
+util.impl.tran proof1:(Proof (Impl a b)) proof2:(Proof (Impl b c)) = rule.mp
+  (rule.mp (util.inst th.prop.impl.tran (rawList (pair a. a) (pair b. b) (pair c. c) nil)) proof1)
+  proof2

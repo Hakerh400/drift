@@ -1,0 +1,25 @@
+head (Pair * a *) = a
+tail (Pair * * a) = a
+
+singleton a = pair a nil
+
+map f Nil = nil
+map f (Pair x xs) = pair (f x) (map f xs)
+
+foldl f z Nil = z
+foldl f z (Pair x xs) = foldl f (f z x) xs
+
+foldr f z Nil = z
+foldr f z (Pair x xs) = f x (foldr f z xs)
+
+all f list = foldl (all_1 f) true list
+all_1 f a b = and a (f b)
+
+any f list = foldl (any_1 f) false list
+any_1 f a b = or a (f b)
+
+rawList = rawList_ nil
+rawList_ list Nil = list
+rawList_ list a = rawList_ (pair a list)
+
+length = foldl (dot2 succ b1) zero

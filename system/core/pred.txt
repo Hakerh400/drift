@@ -1,0 +1,27 @@
+Pred:
+  pred a:(Pident *) = Pred a
+  pred a:(Impl * *) = Pred a
+  pred a:(Pnot *) = Pred a
+  pred a:(Forall * *) = Pred a
+  pred a:(Pelem * *) = Pred a
+
+Pident:
+  pident_ (Strict.Nat a) = Pident a
+
+Impl:
+  impl_ (Pred a) (Pred b) = Impl a b
+
+Pnot:
+  pnot_ (Pred a) = Pnot a
+
+Forall:
+  forall_ (Strict.Nat a) (Pred b) = Forall a b
+
+Pelem:
+  pelem_ (Strict.Nat a) (Strict.Nat b) = Pelem a b
+
+pident a = pident_ (strict.nat a)
+impl a b = impl_ (pred a) (pred b)
+pnot a = pnot_ (pred a)
+forall a b = forall_ (strict.nat a) (pred b)
+pelem a b = pelem_ (strict.nat a) (strict.nat b)

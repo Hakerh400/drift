@@ -1,0 +1,11 @@
+Strict.Nat:
+  strict.nat a:Strict.Zero = Strict.Nat a
+  strict.nat a:(Strict.Succ *) = Strict.Nat a
+
+Strict.Zero:
+  strict.zero = Strict.Zero
+
+Strict.Succ:
+  strict.succ_ (Strict.Nat a) = Strict.Succ a
+
+strict.succ a = strict.succ_ (strict.nat a)

@@ -1,0 +1,109 @@
+-- a -> b -> a
+th.prop.ax1.a.b = ax.prop.1
+
+-- (a -> b -> c) -> (a -> b) -> a -> c
+th.prop.ax2.a.b.c = ax.prop.2
+
+-- (~a -> ~b) -> b -> a
+th.prop.ax3.a.b = ax.prop.3
+
+-- a -> (b -> a) -> a
+th.prop.ax1.a.ba = util.ax1 a. (impl b. a.)
+
+-- (a -> (b -> a) -> a) -> (a -> b -> a) -> a -> a
+th.prop.ax2.a.ba.a = util.ax2 a. (impl b. a.) a.
+
+-- (a -> b -> a) -> a -> a
+th.prop.impl.ax1ab.refl = rule.mp th.prop.ax2.a.ba.a th.prop.ax1.a.ba
+
+-- a -> a
+th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
+
+-- (a -> b -> c -> d) -> a -> (b -> c) -> b -> d
+th.prop.mpt = rule.mp
+  (util.ax2 a. (impl b. (impl c. d.)) (impl (impl b. c.) (impl b. d.)))
+  (util.addSup (util.ax2 b. c. d.) a.)
+
+-- (a -> b) -> (b -> c) -> a -> a
+th.prop.ab.bc.aa = util.addSup2
+  th.prop.impl.refl
+  (impl a. b.)
+  (impl b. c.)
+
+-- (a -> b) -> a -> b
+th.prop.ab.ab = util.impl.refl (impl a. b.)
+
+-- (a -> b) -> a -> b -> c -> b
+th.prop.ab.ab.cb = util.addSup2
+  (util.ax1 b. c.)
+  (impl a. b.)
+  a.
+
+-- (a -> b) -> (a -> b) -> a -> c -> b
+th.prop.ab.ab.acb = util.infer.mpt th.prop.ab.ab.cb
+
+-- (a -> b) -> a -> c -> b
+th.prop.mid = rule.mp
+  (util.infer.ax2 th.prop.ab.ab.acb)
+  th.prop.ab.ab
+
+-- (a -> b) -> (b -> c) -> a -> a -> b
+th.prop.ab.bc.aab = util.mid2
+  th.prop.ab.ab
+  (impl b. c.)
+  a.
+
+-- (a -> b) -> (b -> c) -> a -> b
+th.prop.ab.bc.ab = util.mid th.prop.ab.ab (impl b. c.)
+
+-- (a -> b) -> (b -> c) -> a -> b -> c
+th.prop.ab.bc.abc = util.addSup
+  (util.ax1 (impl b. c.) a.)
+  (impl a. b.)
+
+-- (a -> b) -> (b -> c) -> a -> c
+th.prop.bc.ab.ac = rule.mp
+  (util.infer.ax2 (util.addSup
+    th.prop.ax2.a.b.c
+    (impl b. c.)))
+  (util.ax1 (impl b. c.) a.)
+
+-- (a -> b) -> (c -> a) -> c -> b
+th.prop.ab.ca.cb = util.infer.mpt
+  (util.ax1 (impl a. b.) c.)
+
+-- (a -> b -> c) -> b -> (a -> b) -> a -> c
+th.prop.abc.b.ab.ac = util.mid
+  (util.ax2 a. b. c.)
+  b.
+
+-- (a -> b -> c) -> (b -> a -> b) -> b -> a -> c
+th.prop.abc.bab.bac = util.infer.mpt
+  th.prop.abc.b.ab.ac
+
+-- (a -> b -> c) -> b -> a -> c
+th.prop.reord = util.mp
+  th.prop.abc.bab.bac
+  (util.addSup (util.ax1 b. a.) (impl a. (impl b. c.)))
+
+-- a -> (a -> b) -> b
+th.prop.a.ab.b = util.infer.reord th.prop.ab.ab
+
+-- ((a -> a) -> b) -> b
+th.prop.aa.b.b = rule.mp
+  (rule.inst th.prop.a.ab.b a. (impl a. a.))
+  th.prop.impl.refl
+
+-- (a -> b) -> (b -> c) -> c -> a
+th.prop.impl.tran = util.infer.reord th.prop.bc.ab.ac
+
+-- ((a -> b) -> a -> c) -> a -> b -> c
+th.prop.ax2.rev = util.impl.tran
+  (rule.mp
+    (util.infer.reord
+      (util.infer.mpt
+        (util.ax1
+          (impl (impl a. b.) (impl a. c.))
+          b.)))
+    (util.ax1 b. a.))
+  (util.inst th.prop.reord (rawList (pair a. b.) (pair b. a.) nil))

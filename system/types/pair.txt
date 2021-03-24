@@ -1,0 +1,5 @@
+Pair:
+  pair a b = Pair a b
+
+fst (Pair a *) = a
+snd (Pair * a) = a

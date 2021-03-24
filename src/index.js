@@ -14,10 +14,9 @@ const {tilde} = parser;
 const {isSym, isPair} = Database;
 
 const cwd = __dirname;
-const systemFile = path.join(cwd, '../system/system.txt');
+const systemDir = path.join(cwd, '../system');
 
-const system = O.rfs(systemFile, 1);
-const prog = parser.parse(system);
+const prog = parser.parse(systemDir);
 const db = new Database();
 
 const reduceIdent = function*(ident){

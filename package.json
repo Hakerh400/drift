@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "omikron": "~1.2.53",
-    "@hakerh400/list": "~1.0.6"
+    "@hakerh400/list": "~1.0.6",
+    "@hakerh400/fs-rec": "~1.0.4"
   },
   "devDependencies": {
     "@hakerh400/jstest": "~1.1.2"

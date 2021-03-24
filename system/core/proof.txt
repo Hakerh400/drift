@@ -1,0 +1,9 @@
+Proof:
+  rule.inst_ (Proof phi) ident:(Pident *) (Pred p) = Proof (substPident ident p phi)
+  rule.mp (Proof (Impl a b)) (Proof a) = Proof b
+
+  ax.prop.1 = Proof (impl a. (impl b. a.))
+  ax.prop.2 = Proof (impl (impl a. (impl b. c.)) (impl (impl a. b.) (impl a. c.)))
+  ax.prop.3 = Proof (impl (impl (pnot a.) (pnot b.)) (impl b. a.))
+
+rule.inst a b c = rule.inst_ a b (pred c)

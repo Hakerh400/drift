@@ -1,0 +1,6 @@
+a. = pident strict.zero
+b. = nextPident a.
+c. = nextPident b.
+d. = nextPident c.
+
+nextPident (Pident a) = pident (strict.succ a)

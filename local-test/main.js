@@ -25,7 +25,7 @@ const main = () => {
   log((dt / 1e3).toFixed(3));
 
   db.persist(info);
-  
+
   // db.save();
   // const db = Database.load();
   // db.insert(info);

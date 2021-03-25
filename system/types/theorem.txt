@@ -4,3 +4,4 @@ Theorem:
 
 evalProp a:(Pident *) = a
 evalProp (~Impl a b) = impl (evalProp a) (evalProp b)
+evalProp (~Pnot a) = pnot (evalProp a)

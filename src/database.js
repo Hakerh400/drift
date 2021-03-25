@@ -27,7 +27,7 @@ const isPair = expr => {
 class Database{
   syms = O.obj();
   pairs = O.obj();
-  size = 1;
+  size = 0;
 
   get isPersistent(){ return 0; }
   get isOperative(){ return 0; }
@@ -152,14 +152,14 @@ class Database{
 }
 
 class PersistentDatabase extends Database{
-  table = [null];
+  table = [];
 
   constructor(ctorSym){
     assert(ctorSym === kPdbCtor);
     super();
 
     const {table} = this;
-    const reductions = [null];
+    const reductions = [];
     const str = O.rfs(tableFile, 1);
 
     if(str.length !== 0){
@@ -174,7 +174,7 @@ class PersistentDatabase extends Database{
 
         const info = this.getInfo(expr);
         const reducedIndex = parts.length === reducedOffset ?
-          index + 1 :
+          index :
           parts[reducedOffset] | 0;
 
         reductions.push(reducedIndex);
@@ -205,7 +205,7 @@ class PersistentDatabase extends Database{
         ...isSym(expr) ? [SYM_CHAR + expr.description] : [expr[0].index, expr[1].index],
         ...reducedTo === info ? [] : [reducedTo.index],
       ].join(' ');
-    }).join('\n').slice(1));
+    }).join('\n'));
   }
 }
 

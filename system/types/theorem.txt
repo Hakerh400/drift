@@ -1,0 +1,6 @@
+Theorem:
+  theorem prop proof = assertEq (evalProp prop) (extract proof)
+    (Theorem proof)
+
+evalProp a:(Pident *) = a
+evalProp (~Impl a b) = impl (evalProp a) (evalProp b)

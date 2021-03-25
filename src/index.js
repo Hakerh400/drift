@@ -5,19 +5,19 @@ const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
 const parser = require('./parser');
-const Database = require('./database');
+const database = require('./database');
 const Info = require('./info');
 const cs = require('./ctors');
 const ident2sym = require('./ident2sym');
 
 const {tilde} = parser;
-const {isSym, isPair} = Database;
+const {isSym, isPair} = database;
 
 const cwd = __dirname;
 const systemDir = path.join(cwd, '../system');
 
 const prog = parser.parse(systemDir);
-const db = new Database();
+const db = new database.OperativeDatabase();
 
 const reduceIdent = function*(ident){
   const sym = prog.ident2sym(ident);
@@ -76,9 +76,7 @@ const reduce = function*(info){
       error(`${msg}\n\n${O.rec(info2str, info)}${ctxStr}`);
     };
 
-    const match = function*(formal, actual, left=0, escaped=0){
-      const ref = !(left || escaped);
-
+    const match = function*(formal, actual, escaped=0){
       if(formal instanceof cs.Type){
         const info = yield [reduceExpr, formal.sym];
         return info === actual;
@@ -87,7 +85,7 @@ const reduce = function*(info){
       if(formal instanceof cs.Variable){
         const {sym} = formal;
 
-        if(ref) refs[sym] = 1;
+        if(!escaped) refs[sym] = 1;
 
         if(!O.has(vars, sym)){
           vars[sym] = actual;
@@ -102,16 +100,17 @@ const reduce = function*(info){
         if(isSym(expr)) return 0;
 
         const [fst, snd] = expr;
+        const sndEscaped = fst.baseSym === tilde && fst.argsNum === 0;
 
         return (
-          (yield [match, formal.fst, fst, 1, escaped]) &&
-          (yield [match, formal.snd, snd, 0, escaped || fst.baseSym === tilde])
+          (yield [match, formal.fst, fst, 1]) &&
+          (yield [match, formal.snd, snd, sndEscaped])
         );
       }
 
       if(formal instanceof cs.AsPattern){
         for(const expr of formal.exprs)
-          if(!(yield [match, expr, actual, left, escaped]))
+          if(!(yield [match, expr, actual, escaped]))
             return 0;
 
         return 1;
@@ -154,8 +153,9 @@ const reduce = function*(info){
       }
 
       if(expr instanceof cs.Call){
-        const fst = yield [simplify, expr.fst, escaped];
-        const snd = yield [simplify, expr.snd, escaped || fst.baseSym === tilde];
+        const fst = yield [simplify, expr.fst, 0];
+        const sndEscaped = fst.baseSym === tilde && fst.argsNum === 0;
+        const snd = yield [simplify, expr.snd, sndEscaped];
         const info = db.getInfo([fst, snd]);
 
         return O.tco(reduce, info);
@@ -213,9 +213,9 @@ const error = msg => {
 };
 
 module.exports = {
+  database,
   reduceIdent,
   info2str,
   db,
-  Database,
   ident2sym,
 };

@@ -14,52 +14,23 @@ const cwd = __dirname;
 const dbDir = path.join(cwd, '../database');
 const tableFile = path.join(dbDir, 'table.txt');
 
+const kPdbCtor = Symbol('pdbCtor');
+
+const isSym = expr => {
+  return typeof expr === 'symbol';
+};
+
+const isPair = expr => {
+  return typeof expr === 'object';
+};
+
 class Database{
-  static load(){
-    const db = new Database();
-    const {table} = db;
-    const reductions = [null];
-
-    const str = O.rfs(tableFile, 1);
-
-    if(str.length !== 0){
-      O.sanl(str).forEach((line, index) => {
-        const parts = line.split(' ');
-        const isSym = parts[0][0] === SYM_CHAR;
-        const reducedOffset = isSym ? 1 : 2;
-
-        const expr = isSym ?
-          ident2sym(parts[0].slice(1)) :
-          [table[parts[0] | 0], table[parts[1] | 0]];
-
-        const info = db.getInfo(expr);
-        const reducedIndex = parts.length === reducedOffset ?
-          index + 1 :
-          parts[reducedOffset] | 0;
-
-        reductions.push(reducedIndex);
-
-        return info;
-      });
-    }
-
-    reductions.forEach((r, i) => {
-      if(r === null) return;
-
-      db.reduce(table[i], table[r], 0);
-    });
-
-    return db;
-  }
-
-  table = [null];
-
   syms = O.obj();
   pairs = O.obj();
+  size = 1;
 
-  get size(){
-    return this.table.length;
-  }
+  get isPersistent(){ return 0; }
+  get isOperative(){ return 0; }
 
   hasExpr(expr){
     if(isSym(expr))
@@ -146,7 +117,6 @@ class Database{
       assert(to.reducedTo === to);
 
     from.reducedTo = to;
-    // to.reducedFrom.push(from);
 
     return to;
   }
@@ -156,11 +126,10 @@ class Database{
   }
 
   infoFromExpr(expr){
-    const {table} = this;
-    const index = table.length;
+    const {isPersistent} = this;
     const info = new Info();
 
-    info.index = index;
+    info.index = this.size++;
     info.expr = expr;
 
     if(isSym(expr)){
@@ -173,15 +142,55 @@ class Database{
 
       info.baseSym = fst.baseSym;
       info.argsNum = fst.argsNum + 1;
-
-      // fst.refs.push(index);
-      // if(fst !== snd) snd.refs.push(index);
     }
 
-    table.push(info);
+    if(isPersistent)
+      this.table.push(info);
 
     return info;
   }
+}
+
+class PersistentDatabase extends Database{
+  table = [null];
+
+  constructor(ctorSym){
+    assert(ctorSym === kPdbCtor);
+    super();
+
+    const {table} = this;
+    const reductions = [null];
+    const str = O.rfs(tableFile, 1);
+
+    if(str.length !== 0){
+      O.sanl(str).forEach((line, index) => {
+        const parts = line.split(' ');
+        const isSym = parts[0][0] === SYM_CHAR;
+        const reducedOffset = isSym ? 1 : 2;
+
+        const expr = isSym ?
+          ident2sym(parts[0].slice(1)) :
+          [table[parts[0] | 0], table[parts[1] | 0]];
+
+        const info = this.getInfo(expr);
+        const reducedIndex = parts.length === reducedOffset ?
+          index + 1 :
+          parts[reducedOffset] | 0;
+
+        reductions.push(reducedIndex);
+
+        return info;
+      });
+    }
+
+    reductions.forEach((r, i) => {
+      if(r === null) return;
+
+      this.reduce(table[i], table[r], 0);
+    });
+  }
+
+  get isPersistent(){ return 1; }
 
   save(){
     const {table} = this;
@@ -200,15 +209,24 @@ class Database{
   }
 }
 
-const isSym = expr => {
-  return typeof expr === 'symbol';
-};
+class OperativeDatabase extends Database{
+  get isOperative(){ return 1; }
 
-const isPair = expr => {
-  return typeof expr === 'object';
-};
+  persist(info){
+    pdb.insert(info);
+    pdb.save();
+  }
+}
 
-module.exports = Object.assign(Database, {
+const pdb = new PersistentDatabase(kPdbCtor);
+
+module.exports = {
   isSym,
   isPair,
-});
+
+  Database,
+  PersistentDatabase,
+  OperativeDatabase,
+
+  // pdb,
+};

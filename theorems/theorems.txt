@@ -1,0 +1,4 @@
+th.prop.impl.refl
+impl a. a.
+Implication is reflexive.
+[propositional-logic, tautology, implication, reflexivity, relation]

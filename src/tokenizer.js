@@ -5,6 +5,9 @@ const path = require('path');
 const assert = require('assert');
 const O = require('omikron');
 
+const TAB_SIZE = 2;
+const TAB = ' '.repeat(TAB_SIZE);
+
 const tokTypes = O.enum([
   'EQ',
   'COLON',
@@ -21,6 +24,10 @@ const tokChars = '=:*()';
 const tokCharsReg = new RegExp(`[${tokChars.replace(/./gs, a => `\\${a}`)}]`);
 
 const tokenize = function*(str, func){
+  str = str.
+    replace(/;/g, '\n').
+    replace(/\\\s*/g, `\n${TAB}`);
+
   const lines = O.sanl(str).map(line => {
     const commentIndex = line.indexOf('--');
 

@@ -1,0 +1,27 @@
+table.ths-table{
+  border-style: solid;
+  border-color: black;
+  border-width: 1px 0px 0px 1px;
+}
+
+table.ths-table th,
+table.ths-table td{
+  padding: 5px;
+  border-style: solid;
+  border-color: black;
+  border-width: 0px 1px 1px 0px;
+  text-align: center;
+}
+
+.th-verified-cell{
+  font-family: arial;
+  font-weight: bold;
+}
+
+.th-verified{
+  color: #080;
+}
+
+.th-non-verified{
+  color: #a00;
+}

@@ -1,1 +1,7 @@
+th.prop.ax1
+th.prop.ax2
+th.prop.ax3
 th.prop.impl.refl
+th.prop.impl.tran
+th.prop.reord
+th.prop.ax2.rev

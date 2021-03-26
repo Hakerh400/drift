@@ -29,7 +29,6 @@ const main = async () => {
   O.ce(tr, 'th').innerText = 'Name';
   O.ce(tr, 'th').innerText = 'Statement';
   O.ce(tr, 'th').innerText = 'Description';
-  O.ce(tr, 'th').innerText = 'Tags';
   O.ce(tr, 'th').innerText = 'Verified';
 
   for(const th of ths){
@@ -45,9 +44,6 @@ const main = async () => {
 
     const desc = O.ce(tr, 'td');
     desc.innerText = th.desc;
-
-    const tags = O.ce(tr, 'td');
-    tags.innerText = th.tags.join(', ');
 
     const verified = O.ce(tr, 'td');
     verified.classList.add('th-verified-cell');
@@ -70,9 +66,8 @@ const loadThs = async () => {
     const name = lines[0];
     const propStr = lines[1];
     const desc = lines[2];
-    const tags = lines[3].slice(1, -1).split(', ');
 
-    return new Theorem(name, propStr, desc, tags);
+    return new Theorem(name, propStr, desc);
   });
 };
 

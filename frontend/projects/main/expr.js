@@ -5,4 +5,4 @@ const path = require('path');
 const O = require('omikron');
 const dir = require('./dir');
 
-module.exports = await require(dir('./theorems/expr'));
+module.exports = await require(dir('theorems/expr'));

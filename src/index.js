@@ -31,14 +31,33 @@ O.sanll(O.rfs(thsFile, 1), 0).map(str => {
   ths[name] = expr;
 });
 
-let verifiedStr = O.rfs(verifiedFile, 1);
-const verified = O.arr2obj(O.sanl(verifiedStr, 0));
+const verified = O.arr2obj(O.sanl(O.rfs(verifiedFile, 1), 0));
 
 const prog = parser.parse(systemDir);
 
-const verify = thName => {
-  if(O.has(verified, thName))
-    return;
+const verifyAll = (force=0) => {
+  if(force){
+    for(const thName of O.keys(verified))
+      delete verified[thName];
+
+    saveVerified();
+  }
+
+  for(const thName of O.keys(ths))
+    verify(thName);
+};
+
+const verify = (thName, force=0) => {
+  const update = status => {
+    updateVerified(thName, status);
+  };
+
+  if(isVerified(thName)){
+    if(!force) return;
+    update(0);
+  }
+
+  log(thName);
 
   const db = new database.OperativeDatabase();
 
@@ -218,15 +237,43 @@ const verify = thName => {
 
   assert(th.baseSym === ident2sym('Proof'));
   assert(th.argsNum === 1);
-  assert(th.expr[1] === prop);
 
-  if(verifiedStr !== '')
-    verifiedStr += '\n';
+  const actual = th.expr[1];
 
-  verifiedStr += thName;
-  O.wfs(verifiedFile, verifiedStr);
+  if(actual !== prop){
+    update(0);
 
-  verified[thName] = 1;
+    O.logb();
+    log('The proof is incorrect');
+    log();
+    log(info2str(prop));
+    log();
+    log(info2str(actual));
+    O.exit();
+  }
+
+  update(1);
+};
+
+const updateVerified = (thName, status) => {
+  if(getStatus(thName) === status) return;
+
+  if(status) verified[thName] = 1;
+  else delete verified[thName];
+
+  saveVerified();
+};
+
+const saveVerified = () => {
+  O.wfs(verifiedFile, O.keys(verified).join('\n'));
+};
+
+const getStatus = thName => {
+  return isVerified(thName) ? 1 : 0;
+};
+
+const isVerified = thName => {
+  return O.has(verified, thName);
 };
 
 const info2str = info => {
@@ -266,6 +313,7 @@ const error = msg => {
 };
 
 module.exports = {
+  verifyAll,
   verify,
   // reduceIdent,
   // info2str,

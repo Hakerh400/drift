@@ -94,7 +94,7 @@ th.prop.aa.b.b = rule.mp
   (rule.inst th.prop.a.ab.b a. (impl a. a.))
   th.prop.impl.refl
 
--- (a -> b) -> (b -> c) -> c -> a
+-- (a -> b) -> (b -> c) -> a -> c
 th.prop.impl.tran = util.infer.reord th.prop.bc.ab.ac
 
 -- ((a -> b) -> a -> c) -> a -> b -> c
@@ -107,3 +107,7 @@ th.prop.ax2.rev = util.impl.tran
           b.)))
     (util.ax1 b. a.))
   (util.inst th.prop.reord (rawList (pair a. b.) (pair b. a.) nil))
+
+th.prop.ax1 = th.prop.ax1.a.b
+th.prop.ax2 = th.prop.ax2.a.b.c
+th.prop.ax3 = th.prop.ax3.a.b

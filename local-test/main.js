@@ -9,12 +9,7 @@ const drift = require('..');
 const {Database} = drift;
 
 const main = () => {
-  // const info = O.rec(drift.reduceIdent, 'main');
-  // const str = O.rec(drift.info2str, info);
-
-  drift.verify('th.prop.impl.refl');
-
-  // log(str);
+  drift.verifyAll();
 };
 
 main();

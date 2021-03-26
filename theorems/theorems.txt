@@ -1,14 +1,14 @@
 th.prop.ax1
 impl a. (impl b. a.)
-The first axiom of propositional logic
+First axiom of propositional logic
 
 th.prop.ax2
 impl (impl a. (impl b. c.)) (impl (impl a. b.) (impl a. c.))
-The second axiom of propositional logic
+Second axiom of propositional logic
 
 th.prop.ax3
 impl (impl (pnot a.) (pnot b.)) (impl b. a.)
-The third axiom of propositional logic
+Third axiom of propositional logic
 
 th.prop.impl.refl
 impl a. a.
@@ -20,8 +20,8 @@ Implication is transitive
 
 th.prop.reord
 impl (impl a. (impl b. c.)) (impl b. (impl a. c.))
-The first two antecedents can be swapped
+First two antecedents can be swapped
 
-th.prop.ax2.rev
+th.prop.ax2.conv
 impl (impl (impl a. b.) (impl a. c.)) (impl a. (impl b. c.))
-The reverse of the second axiom of propositional logic
+Converse of the second axiom of propositional logic

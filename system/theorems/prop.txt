@@ -98,7 +98,7 @@ th.prop.aa.b.b = rule.mp
 th.prop.impl.tran = util.infer.reord th.prop.bc.ab.ac
 
 -- ((a -> b) -> a -> c) -> a -> b -> c
-th.prop.ax2.rev = util.impl.tran
+th.prop.ax2.conv = util.impl.tran
   (rule.mp
     (util.infer.reord
       (util.infer.mpt

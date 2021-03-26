@@ -1,10 +1,1 @@
-main = theorem
-  (
-    -- ((a -> b) -> a -> c) -> a -> b -> c
-    ~Impl
-    (~Impl
-      (~Impl a. b.)
-      (~Impl a. c.))
-    (~Impl a. (~Impl b. c.))
-  )
-  th.prop.ax2.rev
+main = th.prop.impl.refl

@@ -15,10 +15,10 @@ const verifiedFile = path.join(thsDir, 'verified.txt');
 
 const main = async () => {
   const ths = await loadThs();
-  const ver = await loadVerified();
+  const verified = await loadVerified();
 
   for(const th of ths)
-    if(O.has(ver, th.name))
+    if(O.has(verified, th.name))
       th.verified = 1;
 
   const table = O.ce(O.body, 'table');
@@ -64,9 +64,8 @@ const main = async () => {
 
 const loadThs = async () => {
   const str = await O.rfs(thsFile, 1);
-  if(str.length === 0) return [];
 
-  return O.sanll(str).map(str => {
+  return O.sanll(str, 0).map(str => {
     const lines = O.sanl(str);
     const name = lines[0];
     const propStr = lines[1];
@@ -79,9 +78,7 @@ const loadThs = async () => {
 
 const loadVerified = async () => {
   const str = await O.rfs(verifiedFile, 1);
-  if(str.length === 0) return [];
-
-  return O.arr2obj(O.sanl(str));
+  return O.arr2obj(O.sanl(str, 0));
 };
 
 main().catch(log);

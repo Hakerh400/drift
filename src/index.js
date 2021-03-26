@@ -9,189 +9,242 @@ const database = require('./database');
 const Info = require('./info');
 const cs = require('./ctors');
 const ident2sym = require('./ident2sym');
+const Expr = require('../theorems/expr');
 
 const {tilde} = parser;
 const {isSym, isPair} = database;
 
 const cwd = __dirname;
-const systemDir = path.join(cwd, '../system');
+const mainDir = path.join(cwd, '..');
+const systemDir = path.join(mainDir, 'system');
+const thsDir = path.join(mainDir, 'theorems');
+const thsFile = path.join(thsDir, 'theorems.txt');
+const verifiedFile = path.join(thsDir, 'verified.txt');
+
+const ths = O.obj();
+
+O.sanll(O.rfs(thsFile, 1), 0).map(str => {
+  const lines = O.sanl(str);
+  const name = lines[0];
+  const expr = Expr.parse(lines[1]);
+
+  ths[name] = expr;
+});
+
+let verifiedStr = O.rfs(verifiedFile, 1);
+const verified = O.arr2obj(O.sanl(verifiedStr, 0));
 
 const prog = parser.parse(systemDir);
-const db = new database.OperativeDatabase();
 
-const reduceIdent = function*(ident){
-  const sym = prog.ident2sym(ident);
-  return O.tco(reduceExpr, sym);
-};
+const verify = thName => {
+  if(O.has(verified, thName))
+    return;
 
-const reduceExpr = function*(expr){
-  const info = db.getInfo(expr);
-  return O.tco(reduce, info);
-};
+  const db = new database.OperativeDatabase();
 
-const reduce = function*(info){
-  if(info.reducedTo !== null)
-    return info.reducedTo;
-
-  const {baseSym} = info;
-
-  if(prog.hasType(baseSym))
-    return db.reduceToItself(info);
-
-  const func = prog.getFunc(baseSym);
-  const funcType = func.type;
-  const {arity} = func;
-  const args = getArgsFromInfo(info);
-  const argsNum = args.length;
-
-  assert(argsNum <= arity);
-
-  if(argsNum < arity)
-    return db.reduceToItself(info);
-
-  const err = msg => {
-    error(`${msg}\n\n${O.rec(info2str, info)}`);
+  const reduceIdent = function*(ident){
+    const sym = prog.ident2sym(ident);
+    return O.tco(reduceExpr, sym);
   };
 
-  const {cases} = func;
-  const casesNum = cases.length;
+  const reduceExpr = function*(expr){
+    const info = db.getInfo(expr);
+    return O.tco(reduce, info);
+  };
 
-  tryCase: for(let i = 0; i !== casesNum; i++){
-    const fcase = cases[i];
+  const reduce = function*(info){
+    if(info.reducedTo !== null)
+      return info.reducedTo;
 
-    const {lhs, rhs} = fcase;
-    const lhsArg = lhs.args;
-    const rhsExpr = rhs.expr;
+    const {baseSym} = info;
 
-    const vars = O.obj();
-    const refs = O.obj();
+    if(prog.hasType(baseSym))
+      return db.reduceToItself(info);
 
-    const errCtx = msg => {
-      const ctxInfo = O.keys(vars).map(sym => {
-        return `${sym.description}: ${O.rec(info2str, vars[sym])}`;
-      });
+    const func = prog.getFunc(baseSym);
+    const funcType = func.type;
+    const {arity} = func;
+    const args = getArgsFromInfo(info);
+    const argsNum = args.length;
 
-      const ctxStr = ctxInfo.length !== 0 ? `\n\n${ctxInfo.join('\n')}` : '';
+    assert(argsNum <= arity);
 
-      error(`${msg}\n\n${O.rec(info2str, info)}${ctxStr}`);
+    if(argsNum < arity)
+      return db.reduceToItself(info);
+
+    const err = msg => {
+      error(`${msg}\n\n${O.rec(info2str, info)}`);
     };
 
-    const match = function*(formal, actual, escaped=0){
-      if(formal instanceof cs.Type){
-        const info = yield [reduceExpr, formal.sym];
-        return info === actual;
-      }
-      
-      if(formal instanceof cs.Variable){
-        const {sym} = formal;
+    const {cases} = func;
+    const casesNum = cases.length;
 
-        if(!escaped) refs[sym] = 1;
+    tryCase: for(let i = 0; i !== casesNum; i++){
+      const fcase = cases[i];
 
-        if(!O.has(vars, sym)){
-          vars[sym] = actual;
+      const {lhs, rhs} = fcase;
+      const lhsArg = lhs.args;
+      const rhsExpr = rhs.expr;
+
+      const vars = O.obj();
+      const refs = O.obj();
+
+      const errCtx = msg => {
+        const ctxInfo = O.keys(vars).map(sym => {
+          return `${sym.description}: ${O.rec(info2str, vars[sym])}`;
+        });
+
+        const ctxStr = ctxInfo.length !== 0 ? `\n\n${ctxInfo.join('\n')}` : '';
+
+        error(`${msg}\n\n${O.rec(info2str, info)}${ctxStr}`);
+      };
+
+      const match = function*(formal, actual, escaped=0){
+        if(formal instanceof cs.Type){
+          const info = yield [reduceExpr, formal.sym];
+          return info === actual;
+        }
+        
+        if(formal instanceof cs.Variable){
+          const {sym} = formal;
+
+          if(!escaped) refs[sym] = 1;
+
+          if(!O.has(vars, sym)){
+            vars[sym] = actual;
+            return 1;
+          }
+
+          return vars[sym] === actual;
+        }
+
+        if(formal instanceof cs.Pair){
+          const {expr} = actual;
+          if(isSym(expr)) return 0;
+
+          const [fst, snd] = expr;
+          const sndEscaped = fst.baseSym === tilde && fst.argsNum === 0;
+
+          return (
+            (yield [match, formal.fst, fst, 1]) &&
+            (yield [match, formal.snd, snd, sndEscaped])
+          );
+        }
+
+        if(formal instanceof cs.AsPattern){
+          for(const expr of formal.exprs)
+            if(!(yield [match, expr, actual, escaped]))
+              return 0;
+
           return 1;
         }
 
-        return vars[sym] === actual;
-      }
+        if(formal instanceof cs.AnyExpression)
+          return 1;
 
-      if(formal instanceof cs.Pair){
-        const {expr} = actual;
-        if(isSym(expr)) return 0;
+        assert.fail(formal.constructor.name);
+      };
 
-        const [fst, snd] = expr;
-        const sndEscaped = fst.baseSym === tilde && fst.argsNum === 0;
+      const simplify = function*(expr, escaped=0){
+        if(expr instanceof cs.NamedExpression){
+          const {sym} = expr;
 
-        return (
-          (yield [match, formal.fst, fst, 1]) &&
-          (yield [match, formal.snd, snd, sndEscaped])
-        );
-      }
+          const illegalConstructor = (
+            !escaped &&
+            expr instanceof cs.Type &&
+            prog.hasType(sym) &&
+            sym !== funcType &&
+            sym !== tilde
+          );
 
-      if(formal instanceof cs.AsPattern){
-        for(const expr of formal.exprs)
-          if(!(yield [match, expr, actual, escaped]))
-            return 0;
+          if(illegalConstructor)
+            err(`Function ${
+              O.sf(func.sym.description)} is not allowed to explicitly contruct type ${
+              O.sf(sym.description)}`);
 
-        return 1;
-      }
+          if(O.has(vars, sym)){
+            if(!escaped && !O.has(refs, sym))
+              errCtx(`Variable ${
+                O.sf(sym.description)} from case ${
+                i + 1} of function ${
+                O.sf(func.sym.description)} cannot be referenced in this context`);
 
-      if(formal instanceof cs.AnyExpression)
-        return 1;
+            return vars[sym];
+          }
 
-      assert.fail(formal.constructor.name);
-    };
-
-    const simplify = function*(expr, escaped=0){
-      if(expr instanceof cs.NamedExpression){
-        const {sym} = expr;
-
-        const illegalConstructor = (
-          !escaped &&
-          expr instanceof cs.Type &&
-          prog.hasType(sym) &&
-          sym !== funcType &&
-          sym !== tilde
-        );
-
-        if(illegalConstructor)
-          err(`Function ${
-            O.sf(func.sym.description)} is not allowed to explicitly contruct type ${
-            O.sf(sym.description)}`);
-
-        if(O.has(vars, sym)){
-          if(!escaped && !O.has(refs, sym))
-            errCtx(`Variable ${
-              O.sf(sym.description)} from case ${
-              i + 1} of function ${
-              O.sf(func.sym.description)} cannot be referenced in this context`);
-
-          return vars[sym];
+          return O.tco(reduceExpr, sym);
         }
 
-        return O.tco(reduceExpr, sym);
+        if(expr instanceof cs.Call){
+          const fst = yield [simplify, expr.fst, escaped];
+          const sndEscaped = fst.baseSym === tilde && fst.argsNum === 0;
+          const snd = yield [simplify, expr.snd, sndEscaped];
+          const info = db.getInfo([fst, snd]);
+
+          return O.tco(reduce, info);
+        }
+
+        assert.fail(expr.constructor.name);
+      };
+
+      for(let j = 0; j !== arity; j++){
+        const formal = lhsArg[j];
+        const actual = args[j];
+
+        if(!(yield [match, formal, actual]))
+          continue tryCase;
       }
 
-      if(expr instanceof cs.Call){
-        const fst = yield [simplify, expr.fst, escaped];
-        const sndEscaped = fst.baseSym === tilde && fst.argsNum === 0;
-        const snd = yield [simplify, expr.snd, sndEscaped];
-        const info = db.getInfo([fst, snd]);
-
-        return O.tco(reduce, info);
-      }
-
-      assert.fail(expr.constructor.name);
-    };
-
-    for(let j = 0; j !== arity; j++){
-      const formal = lhsArg[j];
-      const actual = args[j];
-
-      if(!(yield [match, formal, actual]))
-        continue tryCase;
+      const reduced = yield [simplify, rhsExpr];
+      
+      return db.reduce(info, reduced);
     }
 
-    const reduced = yield [simplify, rhsExpr];
-    
-    return db.reduce(info, reduced);
-  }
+    err(`Non-exhaustive patterns in function ${O.sf(baseSym.description)}`);
+  };
 
-  err(`Non-exhaustive patterns in function ${O.sf(baseSym.description)}`);
+  const evalExpr = function*(expr){
+    if(expr.isSym)
+      return O.tco(reduceIdent, expr.name);
+
+    const fst = yield [evalExpr, expr.fst];
+    const snd = yield [evalExpr, expr.snd];
+
+    return O.tco(reduceExpr, [fst, snd]);
+  };
+
+  const th = O.rec(reduceIdent, thName);
+  const prop = O.rec(evalExpr, ths[thName]);
+
+  assert(th.baseSym === ident2sym('Proof'));
+  assert(th.argsNum === 1);
+  assert(th.expr[1] === prop);
+
+  if(verifiedStr !== '')
+    verifiedStr += '\n';
+
+  verifiedStr += thName;
+  O.wfs(verifiedFile, verifiedStr);
+
+  verified[thName] = 1;
 };
 
-const info2str = function*(info, parens=0){
-  const {expr} = info;
+const info2str = info => {
+  const info2str = function*(info, parens=0){
+    const {expr} = info;
 
-  if(isSym(expr))
-    return expr.description;
+    if(isSym(expr))
+      return expr.description;
 
-  const str = `${
-    yield [info2str, expr[0], 0]} ${
-    yield [info2str, expr[1], 1]}`;
+    const str = `${
+      yield [info2str, expr[0], 0]} ${
+      yield [info2str, expr[1], 1]}`;
 
-  if(parens) return `(${str})`;
-  return str;
+    if(parens) return `(${str})`;
+    return str;
+  };
+
+  return O.rec(info2str, info);
 };
 
 const getArgsFromInfo = info => {
@@ -213,9 +266,7 @@ const error = msg => {
 };
 
 module.exports = {
-  database,
-  reduceIdent,
-  info2str,
-  db,
-  ident2sym,
+  verify,
+  // reduceIdent,
+  // info2str,
 };

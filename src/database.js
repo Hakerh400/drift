@@ -9,10 +9,9 @@ const ident2sym = require('./ident2sym');
 
 const SYM_CHAR = ':';
 
-const cwd = __dirname;
-
-const dbDir = path.join(cwd, '../database');
-const tableFile = path.join(dbDir, 'table.txt');
+// const cwd = __dirname;
+// const dbDir = path.join(cwd, '../database');
+// const tableFile = path.join(dbDir, 'table.txt');
 
 const kPdbCtor = Symbol('pdbCtor');
 
@@ -213,12 +212,13 @@ class OperativeDatabase extends Database{
   get isOperative(){ return 1; }
 
   persist(info){
-    pdb.insert(info);
-    pdb.save();
+    assert.fail();
+    // pdb.insert(info);
+    // pdb.save();
   }
 }
 
-const pdb = new PersistentDatabase(kPdbCtor);
+// const pdb = new PersistentDatabase(kPdbCtor);
 
 module.exports = {
   isSym,

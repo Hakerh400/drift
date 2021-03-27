@@ -27,7 +27,7 @@ const main = async () => {
   table.cellSpacing = 0;
 
   const tr = O.ce(table, 'tr');
-  O.ce(tr, 'th').innerText = 'Name';
+  O.ce(tr, 'th').innerText = 'Theorem';
   O.ce(tr, 'th').innerText = 'Statement';
   O.ce(tr, 'th').innerText = 'Description';
   O.ce(tr, 'th').innerText = 'Verified';

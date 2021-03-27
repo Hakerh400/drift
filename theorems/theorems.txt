@@ -34,11 +34,11 @@ th.prop.ant.intr.ext
 impl (impl a. (impl b. c.)) (impl (impl d. a.) (impl (impl d. b.) (impl d. c.)))
 Extension of "th.prop.ant.intr"
 
-th.prop.double-neg.intr
+th.prop.dneg.intr
 impl a. (pnot (pnot a.))
 Double negation introduction
 
-th.prop.double-neg.elim
+th.prop.dneg.elim
 impl (pnot (pnot a.)) a.
 Double negation elimination
 

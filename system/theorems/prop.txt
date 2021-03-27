@@ -122,25 +122,25 @@ th.prop.ant.intr.ext = util.tran
       (impl d. a.)))
 
 -- (~~a -> ~~b) -> a -> b
-th.prop.double-neg.elim2 = util.tran
+th.prop.dneg2.elim = util.tran
   (util.ax3 (pnot a.) (pnot b.))
   (util.ax3 b. a.)
 
 -- ~~a -> a
-th.prop.double-neg.elim = rule.mp
+th.prop.dneg.elim = rule.mp
   (util.reord
     (util.tran
       (util.ax1 (pnot2 a.) (pnot2 (extract th.prop.impl.refl)))
-      (util.inst th.prop.double-neg.elim2 (rawList
+      (util.inst th.prop.dneg2.elim (rawList
         (pair a. (extract th.prop.impl.refl))
         (pair b. a.)
         nil))))
   th.prop.impl.refl
 
 -- a -> ~~a
-th.prop.double-neg.intr = rule.mp
+th.prop.dneg.intr = rule.mp
   (util.ax3 (pnot2 a.) a.)
-  (rule.inst th.prop.double-neg.elim a. (pnot a.))
+  (rule.inst th.prop.dneg.elim a. (pnot a.))
 
 -- (a -> b) -> ~b -> ~a
 -- th.prop.ax3.conv

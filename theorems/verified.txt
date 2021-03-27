@@ -7,5 +7,5 @@ th.prop.reord
 th.prop.ax2.conv
 th.prop.ant.intr
 th.prop.ant.intr.ext
-th.prop.double-neg.intr
-th.prop.double-neg.elim
+th.prop.dneg.intr
+th.prop.dneg.elim

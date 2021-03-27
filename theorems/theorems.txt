@@ -45,6 +45,3 @@ Double negation elimination
 th.prop.ax3.conv
 impl (impl phi psi) (impl (pnot psi) (pnot phi))
 Converse of the third axiom of propositional logic
-
-test
-impl (forall a. (forall b. (impl phi (pelem a. b.)))) (forall a. (forall b. (impl phi (pelem a. b.))))

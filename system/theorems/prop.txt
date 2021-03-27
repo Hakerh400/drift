@@ -142,10 +142,31 @@ th.prop.dneg.intr = rule.mp
   (util.ax3 (pnot2 phi) phi)
   (rule.inst th.prop.dneg.elim phi (pnot phi))
 
+-- (a -> b) -> ~~a -> b
+th.prop.dneg.intr1 = rule.mp
+  (util.inst th.prop.impl.tran (rawList
+    (pair phi (pnot2 phi))
+    (pair psi phi)
+    (pair chi psi)
+    nil))
+  th.prop.dneg.elim
+
+-- (a -> b) -> a -> ~~b
+th.prop.dneg.intr2 = util.ant.intr
+  (rule.inst th.prop.dneg.intr phi psi)
+  phi
+
+-- (a -> b) -> ~~a -> ~~b
+th.prop.dneg2.intr = util.tran
+  th.prop.dneg.intr1
+  (rule.inst th.prop.dneg.intr2 phi (pnot2 phi))
+
 -- (a -> b) -> ~b -> ~a
--- th.prop.ax3.conv
+th.prop.ax3.conv = util.tran
+  th.prop.dneg2.intr
+  (util.ax3 (pnot phi) (pnot psi))
 
 -- a -> ~b -> ~(a -> b)
--- th.prop.phi-psi-ab
-
-test = util.impl.refl (forall a. (forall b. (impl phi (pelem a. b.))))
+th.prop.a.-b.-ab = util.tran
+  th.prop.a.ab.b
+  (rule.inst th.prop.ax3.conv phi (impl phi psi))

@@ -1,0 +1,64 @@
+Compr:
+  synt.compr ident pred = Compr ident pred
+
+synt.true = forall a. (synt.eq a. a.)
+
+synt.false = pnot synt.true
+
+synt.or a b = impl (pnot a) b
+
+synt.and a b = pnot (synt.or (pnot a) (pnot b))
+
+synt.iff a b = synt.and (impl a b) (impl b a)
+
+synt.exi a p = pnot (forall a (pnot p))
+
+synt.nexi a p = pnot (synt.exi a p)
+
+synt.unique a p = synt.and
+  (synt.exi a p)
+  (forall a (forall (availIdent p)
+    (impl
+      (synt.and p (substIdent a (availIdent p) p))
+      (synt.eq a (availIdent p)))))
+
+synt.eq a b = synt.eq_ a b (availIdent (rawList a b nil))
+synt.eq_ a b c = synt.and
+  (forall c (synt.iff (synt.in c a) (synt.in c b)))
+  (forall c (synt.iff (synt.in a c) (synt.in b c)))
+
+synt.neq a b = pnot (synt.eq a b)
+
+synt.in (Compr a p) b = synt.in_ a p b (availIdent (rawList a p b nil))
+synt.in a (Compr b p) = substIdent b a p
+synt.in a b = pelem a b
+synt.in_ a p b c = synt.exi c (synt.and
+  (synt.in c b)
+  (forall a (synt.iff (synt.in a c) p)))
+
+synt.list2set list = synt.list2set_ list (availIdent list)
+synt.list2set_ list b = synt.compr b (foldl
+  (synt.eq b)
+  synt.false
+  list)
+
+synt.empty = synt.list2set nil
+
+synt.union a b = synt.union_ a b (availIdent (rawList a b nil))
+synt.union_ a b c = synt.compr c (synt.or
+  (synt.in c a)
+  (synt.in c b))
+
+synt.inter a b = synt.inter_ a b (availIdent (rawList a b nil))
+synt.inter_ a b c = synt.compr c (synt.and
+  (synt.in c a)
+  (synt.in c b))
+
+synt.subseteq a b = synt.subseteq_ a b (availIdent (rawList a b nil))
+synt.subseteq_ a b c = forall c (impl
+  (synt.in c a)
+  (synt.in c b))
+
+synt.subset a b = synt.and
+  (synt.subseteq a b)
+  (synt.neq a b)

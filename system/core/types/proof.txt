@@ -8,27 +8,3 @@ Proof:
   ax.prop.3 = Proof (impl (impl (pnot phi) (pnot psi)) (impl psi phi))
 
 rule.inst a b c = rule.inst_ a b (pred c)
-
-substPident pident:(Pident *) p pident = p
-substPident pident:(Pident *) p a:(Pident *) = a
-substPident pident:(Pident *) p (Impl a b) = impl (substPident pident p a) (substPident pident p b)
-substPident pident:(Pident *) p (Pnot a) = pnot (substPident pident p a)
-substPident pident:(Pident *) p (Forall a b) = forall a (substPident pident p b)
-substPident pident:(Pident *) p a:(Pelem * *) = a
-
-substIdent ident1 ident2 (Impl a b) = impl (substIdent ident1 ident2 a) (substIdent ident1 ident2 b)
-substIdent ident1 ident2 (Pnot a) = pnot (substIdent ident1 ident2 a)
-substIdent ident1 ident2 x:(Forall ident1 b) = x
-substIdent ident1 ident2 (Forall a b) = forall a (substIdent ident1 ident2 b)
-substIdent ident1 ident2 (Pelem a b) = pelem (replaceIdent ident1 ident2 a) (replaceIdent ident1 ident2 b)
-
-getFreeIdents p = getFreeIdents_ p natSet.empty
-getFreeIdents_ (Pident *) set = set
-getFreeIdents_ (Impl a b) set = getFreeIdents_ b (getFreeIdents_ a set)
-getFreeIdents_ (Pnot a) set = getFreeIdents_ a set
-getFreeIdents_ (Forall ident a) set = natSet.remove ident (getFreeIdents_ a set)
-getFreeIdents_ (Pelem a b) set = natSet.insert b (natSet.insert a set)
-
-hasFreeIdents = dot nempty getFreeIdents
-
-noFreeIdents = dot empty getFreeIdents

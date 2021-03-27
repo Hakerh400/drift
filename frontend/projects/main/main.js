@@ -21,6 +21,8 @@ const main = async () => {
     if(O.has(verified, th.name))
       th.verified = 1;
 
+  // ths.reverse().length = 1;
+
   const center = O.ce(O.body, 'center');
   const table = O.ce(center, 'table');
   table.classList.add('ths-table');

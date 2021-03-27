@@ -85,7 +85,7 @@ const expr2math = expr => {
     assert.fail(op);
   };
 
-  return log(O.rec(expr2math, expr));
+  return O.rec(expr2math, expr);
 };
 
 const str2math = str => {

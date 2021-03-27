@@ -12,11 +12,11 @@ foldl f z (Pair x xs) = foldl f (f z x) xs
 foldr f z Nil = z
 foldr f z (Pair x xs) = f x (foldr f z xs)
 
-all f list = foldl (all_1 f) true list
-all_1 f a b = and a (f b)
+all f list = foldl (all_ f) true list
+all_ f a b = and a (f b)
 
-any f list = foldl (any_1 f) false list
-any_1 f a b = or a (f b)
+any f list = foldl (any_ f) false list
+any_ f a b = or a (f b)
 
 rawList = rawList_ nil
 rawList_ list Nil = list

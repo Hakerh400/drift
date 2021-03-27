@@ -1,3 +1,6 @@
+pnot2 = dot pnot pnot
+pnot3 = dot pnot pnot2
+
 proof2pred (Proof a) = pred a
 
 substPident pident:(Pident *) p pident = p

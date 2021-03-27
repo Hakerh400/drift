@@ -92,7 +92,7 @@ const verify = (thName, force=0) => {
       return db.reduceToItself(info);
 
     const err = msg => {
-      error(`${msg}\n\n${O.rec(info2str, info)}`);
+      error(`${msg}\n\n${info2str(info)}`);
     };
 
     const {cases} = func;
@@ -110,12 +110,12 @@ const verify = (thName, force=0) => {
 
       const errCtx = msg => {
         const ctxInfo = O.keys(vars).map(sym => {
-          return `${sym.description}: ${O.rec(info2str, vars[sym])}`;
+          return `${sym.description}: ${info2str(vars[sym])}`;
         });
 
         const ctxStr = ctxInfo.length !== 0 ? `\n\n${ctxInfo.join('\n')}` : '';
 
-        error(`${msg}\n\n${O.rec(info2str, info)}${ctxStr}`);
+        error(`${msg}\n\n${info2str(info)}${ctxStr}`);
       };
 
       const match = function*(formal, actual, escaped=0){

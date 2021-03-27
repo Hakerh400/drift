@@ -21,7 +21,8 @@ const main = async () => {
     if(O.has(verified, th.name))
       th.verified = 1;
 
-  const table = O.ce(O.body, 'table');
+  const center = O.ce(O.body, 'center');
+  const table = O.ce(center, 'table');
   table.classList.add('ths-table');
   table.cellSpacing = 0;
 

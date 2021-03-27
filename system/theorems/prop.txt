@@ -69,7 +69,7 @@ th.prop.bc.ab.ac = rule.mp
   (util.ax1 (impl b. c.) a.)
 
 -- (a -> b) -> (c -> a) -> c -> b
-th.prop.ab.ca.cb = util.infer.mpt
+th.prop.ant.intr = util.infer.mpt
   (util.ax1 (impl a. b.) c.)
 
 -- (a -> b -> c) -> b -> (a -> b) -> a -> c
@@ -87,7 +87,7 @@ th.prop.reord = util.mp
   (util.addSup (util.ax1 b. a.) (impl a. (impl b. c.)))
 
 -- a -> (a -> b) -> b
-th.prop.a.ab.b = util.infer.reord th.prop.ab.ab
+th.prop.a.ab.b = util.reord th.prop.ab.ab
 
 -- ((a -> a) -> b) -> b
 th.prop.aa.b.b = rule.mp
@@ -95,12 +95,12 @@ th.prop.aa.b.b = rule.mp
   th.prop.impl.refl
 
 -- (a -> b) -> (b -> c) -> a -> c
-th.prop.impl.tran = util.infer.reord th.prop.bc.ab.ac
+th.prop.impl.tran = util.reord th.prop.bc.ab.ac
 
 -- ((a -> b) -> a -> c) -> a -> b -> c
 th.prop.ax2.conv = util.impl.tran
   (rule.mp
-    (util.infer.reord
+    (util.reord
       (util.infer.mpt
         (util.ax1
           (impl (impl a. b.) (impl a. c.))
@@ -111,3 +111,39 @@ th.prop.ax2.conv = util.impl.tran
 th.prop.ax1 = th.prop.ax1.a.b
 th.prop.ax2 = th.prop.ax2.a.b.c
 th.prop.ax3 = th.prop.ax3.a.b
+
+-- (a -> b -> c) -> (d -> a) -> (d -> b) -> (d -> c)
+th.prop.ant.intr.ext = util.tran
+  (util.ax1 (impl a. (impl b. c.)) d.)
+  (util.tran
+    (util.ax2 d. a. (impl b. c.))
+    (util.ant.intr
+      (util.ax2 d. b. c.)
+      (impl d. a.)))
+
+-- (~~a -> ~~b) -> a -> b
+th.prop.double-neg.elim2 = util.tran
+  (util.ax3 (pnot a.) (pnot b.))
+  (util.ax3 b. a.)
+
+-- ~~a -> a
+th.prop.double-neg.elim = rule.mp
+  (util.reord
+    (util.tran
+      (util.ax1 (pnot2 a.) (pnot2 (extract th.prop.impl.refl)))
+      (util.inst th.prop.double-neg.elim2 (rawList
+        (pair a. (extract th.prop.impl.refl))
+        (pair b. a.)
+        nil))))
+  th.prop.impl.refl
+
+-- a -> ~~a
+th.prop.double-neg.intr = rule.mp
+  (util.ax3 (pnot2 a.) a.)
+  (rule.inst th.prop.double-neg.elim a. (pnot a.))
+
+-- (a -> b) -> ~b -> ~a
+-- th.prop.ax3.conv
+
+-- a -> ~b -> ~(a -> b)
+-- th.prop.a.-b.-ab

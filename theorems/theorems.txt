@@ -25,3 +25,23 @@ First two antecedents can be swapped
 th.prop.ax2.conv
 impl (impl (impl a. b.) (impl a. c.)) (impl a. (impl b. c.))
 Converse of the second axiom of propositional logic
+
+th.prop.ant.intr
+impl (impl a. b.) (impl (impl c. a.) (impl c. b.))
+Any antecedent can be added to both implication operands
+
+th.prop.ant.intr.ext
+impl (impl a. (impl b. c.)) (impl (impl d. a.) (impl (impl d. b.) (impl d. c.)))
+Extension of "th.prop.ant.intr"
+
+th.prop.double-neg.intr
+impl a. (pnot (pnot a.))
+Double negation introduction
+
+th.prop.double-neg.elim
+impl (pnot (pnot a.)) a.
+Double negation elimination
+
+th.prop.ax3.conv
+impl (impl a. b.) (impl (pnot b.) (pnot a.))
+Converse of the third axiom of propositional logic

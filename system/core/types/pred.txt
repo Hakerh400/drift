@@ -6,7 +6,7 @@ Pred:
   pred a:(Pelem * *) = Pred a
 
 Pident:
-  pident_ (Strict.Nat a) = Pident a
+  pident_ (Nat a) = Pident a
 
 Impl:
   impl_ (Pred a) (Pred b) = Impl a b
@@ -15,13 +15,13 @@ Pnot:
   pnot_ (Pred a) = Pnot a
 
 Forall:
-  forall_ (Strict.Nat a) (Pred b) = Forall a b
+  forall_ (Nat a) (Pred b) = Forall a b
 
 Pelem:
-  pelem_ (Strict.Nat a) (Strict.Nat b) = Pelem a b
+  pelem_ (Nat a) (Nat b) = Pelem a b
 
-pident a = pident_ (strict.nat a)
+pident a = pident_ (nat a)
 impl a b = impl_ (pred a) (pred b)
 pnot a = pnot_ (pred a)
-forall a b = forall_ (strict.nat a) (pred b)
-pelem a b = pelem_ (strict.nat a) (strict.nat b)
+forall a b = forall_ (nat a) (pred b)
+pelem a b = pelem_ (nat a) (nat b)

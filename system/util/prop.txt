@@ -12,8 +12,8 @@ util.inst_3 proof Nil Nil = proof
 util.inst_3 proof (Pair (Pair pident pred) pidents) (Pair avail avails) =
   util.inst_3 (rule.inst proof avail pred) pidents avails
 
-util.raw.2 a b = rawList (pair a. a) (pair b. b) nil
-util.raw.3 a b c = rawList (pair a. a) (pair b. b) (pair c. c) nil
+util.raw.2 a b = rawList (pair phi a) (pair psi b) nil
+util.raw.3 a b c = rawList (pair phi a) (pair psi b) (pair chi c) nil
 
 util.ax1 a b = util.inst ax.prop.1 (util.raw.2 a b)
 util.ax2 a b c = util.inst ax.prop.2 (util.raw.3 a b c)
@@ -53,7 +53,7 @@ util.mp proof1:(Proof (Impl a (Impl b c))) proof2:(Proof (Impl a b)) = rule.mp
   (util.infer.ax2 proof1)
   proof2
 
-util.impl.refl = rule.inst th.prop.impl.refl a.
+util.impl.refl = rule.inst th.prop.impl.refl phi
 
 util.impl.tran proof1:(Proof (Impl a b)) proof2:(Proof (Impl b c)) = rule.mp
   (rule.mp (util.inst th.prop.impl.tran (util.raw.3 a b c)) proof1)

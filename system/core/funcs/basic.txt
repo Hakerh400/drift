@@ -1,0 +1,14 @@
+id a = a
+
+dot a b c = a (b c)
+dot2 a b c d = a (b c d)
+
+b1 a * = a
+b0 * a = a
+
+extract (* a) = a
+
+const a * = a
+
+const2 = dot const const
+const3 = dot const const2

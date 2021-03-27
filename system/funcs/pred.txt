@@ -3,19 +3,6 @@ pnot3 = dot pnot pnot2
 
 proof2pred (Proof a) = pred a
 
-substPident pident:(Pident *) p pident = p
-substPident pident:(Pident *) p a:(Pident *) = a
-substPident pident:(Pident *) p (Impl a b) = impl (substPident pident p a) (substPident pident p b)
-substPident pident:(Pident *) p (Pnot a) = pnot (substPident pident p a)
-substPident pident:(Pident *) p (Forall a b) = forall a (substPident pident p b)
-substPident pident:(Pident *) p a:(Pelem * *) = a
-
-substIdent ident1 ident2 (Impl a b) = impl (substIdent ident1 ident2 a) (substIdent ident1 ident2 b)
-substIdent ident1 ident2 (Pnot a) = pnot (substIdent ident1 ident2 a)
-substIdent ident1 ident2 x:(Forall ident1 b) = x
-substIdent ident1 ident2 (Forall a b) = forall a (substIdent ident1 ident2 b)
-substIdent ident1 ident2 (Pelem a b) = pelem (replaceIdent ident1 ident2 a) (replaceIdent ident1 ident2 b)
-
 replaceIdent ident1 ident2 ident1 = ident2
 replaceIdent ident1 ident2 * = ident1
 
@@ -38,7 +25,7 @@ hasFreeIdent_ ident (Forall ident *) = false
 hasFreeIdent_ ident (Forall * a) = hasFreeIdent_ ident a
 hasFreeIdent_ ident (Pelem a b) = or (eq a ident) (eq b ident)
 
-availPident expr = availPident_1 a. expr
+availPident expr = availPident_1 phi expr
 availPident_1 pident expr = ite (hasPident pident expr)
   availPident_2 availPident_3 pident expr
 availPident_2 pident expr = availPident_1 (nextPident pident) expr
@@ -52,14 +39,14 @@ availPidents expr (Succ num) = pair
 autoPidentPredPairs predUni predInst = pidentMap2pairs
   (makePidentMap predUni predInst nil)
 
-pidentMap2pairs pidentMap = pidentMap2pairs_1 pidentMap a.
+pidentMap2pairs pidentMap = pidentMap2pairs_1 pidentMap phi
 pidentMap2pairs_1 Nil pident = nil
 pidentMap2pairs_1 (Pair Nil rest) pident = pidentMap2pairs_1 rest (nextPident pident)
 pidentMap2pairs_1 (Pair pred rest) pident = pair
   (pair pident pred)
   (pidentMap2pairs_1 rest (nextPident pident))
 
-makePidentMap (Pident num) pred pidentMap = addToPidentMap (unstrict num) pred pidentMap
+makePidentMap (Pident num) pred pidentMap = addToPidentMap num pred pidentMap
 makePidentMap (Impl a b) (Impl c d) pidentMap = makePidentMap b d (makePidentMap a c pidentMap)
 makePidentMap (Pnot a) (Pnot b) pidentMap = makePidentMap a b pidentMap
 makePidentMap (Forall a b) (Forall a c) pidentMap = makePidentMap b c pidentMap

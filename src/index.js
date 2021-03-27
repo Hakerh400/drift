@@ -43,8 +43,18 @@ const verifyAll = (force=0) => {
     saveVerified();
   }
 
-  for(const thName of O.keys(ths))
-    verify(thName);
+  for(const thName of O.keys(ths)){
+    log(thName);
+    log.inc();
+
+    if(prog.hasIdent(thName)){
+      verify(thName);
+    }else{
+      log('Skip');
+    }
+
+    log.dec();
+  }
 };
 
 const verify = (thName, force=0) => {
@@ -56,8 +66,6 @@ const verify = (thName, force=0) => {
     if(!force) return;
     update(0);
   }
-
-  log(thName);
 
   const db = new database.OperativeDatabase();
 

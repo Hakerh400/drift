@@ -1,9 +1,0 @@
-id a = a
-
-dot a b c = a (b c)
-dot2 a b c d = a (b c d)
-
-b1 a * = a
-b0 * a = a
-
-extract (* a) = a

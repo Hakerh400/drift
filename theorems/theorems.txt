@@ -1,47 +1,50 @@
 th.prop.ax1
-impl a. (impl b. a.)
+impl phi (impl psi phi)
 First axiom of propositional logic
 
 th.prop.ax2
-impl (impl a. (impl b. c.)) (impl (impl a. b.) (impl a. c.))
+impl (impl phi (impl psi chi)) (impl (impl phi psi) (impl phi chi))
 Second axiom of propositional logic
 
 th.prop.ax3
-impl (impl (pnot a.) (pnot b.)) (impl b. a.)
+impl (impl (pnot phi) (pnot psi)) (impl psi phi)
 Third axiom of propositional logic
 
 th.prop.impl.refl
-impl a. a.
+impl phi phi
 Implication is reflexive
 
 th.prop.impl.tran
-impl (impl a. b.) (impl (impl b. c.) (impl a. c.))
+impl (impl phi psi) (impl (impl psi chi) (impl phi chi))
 Implication is transitive
 
 th.prop.reord
-impl (impl a. (impl b. c.)) (impl b. (impl a. c.))
+impl (impl phi (impl psi chi)) (impl psi (impl phi chi))
 First two antecedents can be swapped
 
 th.prop.ax2.conv
-impl (impl (impl a. b.) (impl a. c.)) (impl a. (impl b. c.))
+impl (impl (impl phi psi) (impl phi chi)) (impl phi (impl psi chi))
 Converse of the second axiom of propositional logic
 
 th.prop.ant.intr
-impl (impl a. b.) (impl (impl c. a.) (impl c. b.))
+impl (impl phi psi) (impl (impl chi phi) (impl chi psi))
 Any antecedent can be added to both implication operands
 
 th.prop.ant.intr.ext
-impl (impl a. (impl b. c.)) (impl (impl d. a.) (impl (impl d. b.) (impl d. c.)))
+impl (impl phi (impl psi chi)) (impl (impl theta phi) (impl (impl theta psi) (impl theta chi)))
 Extension of "th.prop.ant.intr"
 
 th.prop.dneg.intr
-impl a. (pnot (pnot a.))
+impl phi (pnot (pnot phi))
 Double negation introduction
 
 th.prop.dneg.elim
-impl (pnot (pnot a.)) a.
+impl (pnot (pnot phi)) phi
 Double negation elimination
 
 th.prop.ax3.conv
-impl (impl a. b.) (impl (pnot b.) (pnot a.))
+impl (impl phi psi) (impl (pnot psi) (pnot phi))
 Converse of the third axiom of propositional logic
+
+test
+impl (forall a. (forall b. (impl phi (pelem a. b.)))) (forall a. (forall b. (impl phi (pelem a. b.))))

@@ -1,0 +1,13 @@
+Nat:
+  nat a:Zero = Nat a
+  nat a:(Succ *) = Nat a
+
+Zero:
+  zero = Zero
+
+Succ:
+  succ a:Zero = Succ a
+  succ a:(Succ *) = Succ a
+
+for f z Zero = z
+for f z (Succ a) = f (for f z a)

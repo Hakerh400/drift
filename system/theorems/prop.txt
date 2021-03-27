@@ -8,10 +8,10 @@ th.prop.ax2.a.b.c = ax.prop.2
 th.prop.ax3.a.b = ax.prop.3
 
 -- a -> (b -> a) -> a
-th.prop.ax1.a.ba = util.ax1 a. (impl b. a.)
+th.prop.ax1.a.ba = util.ax1 phi (impl psi phi)
 
 -- (a -> (b -> a) -> a) -> (a -> b -> a) -> a -> a
-th.prop.ax2.a.ba.a = util.ax2 a. (impl b. a.) a.
+th.prop.ax2.a.ba.a = util.ax2 phi (impl psi phi) phi
 
 -- (a -> b -> a) -> a -> a
 th.prop.impl.ax1ab.refl = rule.mp th.prop.ax2.a.ba.a th.prop.ax1.a.ba
@@ -21,23 +21,23 @@ th.prop.impl.refl = rule.mp th.prop.impl.ax1ab.refl th.prop.ax1.a.b
 
 -- (a -> b -> c -> d) -> a -> (b -> c) -> b -> d
 th.prop.mpt = rule.mp
-  (util.ax2 a. (impl b. (impl c. d.)) (impl (impl b. c.) (impl b. d.)))
-  (util.addSup (util.ax2 b. c. d.) a.)
+  (util.ax2 phi (impl psi (impl chi theta)) (impl (impl psi chi) (impl psi theta)))
+  (util.addSup (util.ax2 psi chi theta) phi)
 
 -- (a -> b) -> (b -> c) -> a -> a
 th.prop.ab.bc.aa = util.addSup2
   th.prop.impl.refl
-  (impl a. b.)
-  (impl b. c.)
+  (impl phi psi)
+  (impl psi chi)
 
 -- (a -> b) -> a -> b
-th.prop.ab.ab = util.impl.refl (impl a. b.)
+th.prop.ab.ab = util.impl.refl (impl phi psi)
 
 -- (a -> b) -> a -> b -> c -> b
 th.prop.ab.ab.cb = util.addSup2
-  (util.ax1 b. c.)
-  (impl a. b.)
-  a.
+  (util.ax1 psi chi)
+  (impl phi psi)
+  phi
 
 -- (a -> b) -> (a -> b) -> a -> c -> b
 th.prop.ab.ab.acb = util.infer.mpt th.prop.ab.ab.cb
@@ -50,32 +50,32 @@ th.prop.mid = rule.mp
 -- (a -> b) -> (b -> c) -> a -> a -> b
 th.prop.ab.bc.aab = util.mid2
   th.prop.ab.ab
-  (impl b. c.)
-  a.
+  (impl psi chi)
+  phi
 
 -- (a -> b) -> (b -> c) -> a -> b
-th.prop.ab.bc.ab = util.mid th.prop.ab.ab (impl b. c.)
+th.prop.ab.bc.ab = util.mid th.prop.ab.ab (impl psi chi)
 
 -- (a -> b) -> (b -> c) -> a -> b -> c
 th.prop.ab.bc.abc = util.addSup
-  (util.ax1 (impl b. c.) a.)
-  (impl a. b.)
+  (util.ax1 (impl psi chi) phi)
+  (impl phi psi)
 
 -- (a -> b) -> (b -> c) -> a -> c
 th.prop.bc.ab.ac = rule.mp
   (util.infer.ax2 (util.addSup
     th.prop.ax2.a.b.c
-    (impl b. c.)))
-  (util.ax1 (impl b. c.) a.)
+    (impl psi chi)))
+  (util.ax1 (impl psi chi) phi)
 
 -- (a -> b) -> (c -> a) -> c -> b
 th.prop.ant.intr = util.infer.mpt
-  (util.ax1 (impl a. b.) c.)
+  (util.ax1 (impl phi psi) chi)
 
 -- (a -> b -> c) -> b -> (a -> b) -> a -> c
 th.prop.abc.b.ab.ac = util.mid
-  (util.ax2 a. b. c.)
-  b.
+  (util.ax2 phi psi chi)
+  psi
 
 -- (a -> b -> c) -> (b -> a -> b) -> b -> a -> c
 th.prop.abc.bab.bac = util.infer.mpt
@@ -84,14 +84,14 @@ th.prop.abc.bab.bac = util.infer.mpt
 -- (a -> b -> c) -> b -> a -> c
 th.prop.reord = util.mp
   th.prop.abc.bab.bac
-  (util.addSup (util.ax1 b. a.) (impl a. (impl b. c.)))
+  (util.addSup (util.ax1 psi phi) (impl phi (impl psi chi)))
 
 -- a -> (a -> b) -> b
 th.prop.a.ab.b = util.reord th.prop.ab.ab
 
 -- ((a -> a) -> b) -> b
 th.prop.aa.b.b = rule.mp
-  (rule.inst th.prop.a.ab.b a. (impl a. a.))
+  (rule.inst th.prop.a.ab.b phi (impl phi phi))
   th.prop.impl.refl
 
 -- (a -> b) -> (b -> c) -> a -> c
@@ -103,10 +103,10 @@ th.prop.ax2.conv = util.impl.tran
     (util.reord
       (util.infer.mpt
         (util.ax1
-          (impl (impl a. b.) (impl a. c.))
-          b.)))
-    (util.ax1 b. a.))
-  (util.inst th.prop.reord (rawList (pair a. b.) (pair b. a.) nil))
+          (impl (impl phi psi) (impl phi chi))
+          psi)))
+    (util.ax1 psi phi))
+  (util.inst th.prop.reord (rawList (pair phi psi) (pair psi phi) nil))
 
 th.prop.ax1 = th.prop.ax1.a.b
 th.prop.ax2 = th.prop.ax2.a.b.c
@@ -114,36 +114,38 @@ th.prop.ax3 = th.prop.ax3.a.b
 
 -- (a -> b -> c) -> (d -> a) -> (d -> b) -> (d -> c)
 th.prop.ant.intr.ext = util.tran
-  (util.ax1 (impl a. (impl b. c.)) d.)
+  (util.ax1 (impl phi (impl psi chi)) theta)
   (util.tran
-    (util.ax2 d. a. (impl b. c.))
+    (util.ax2 theta phi (impl psi chi))
     (util.ant.intr
-      (util.ax2 d. b. c.)
-      (impl d. a.)))
+      (util.ax2 theta psi chi)
+      (impl theta phi)))
 
 -- (~~a -> ~~b) -> a -> b
 th.prop.dneg2.elim = util.tran
-  (util.ax3 (pnot a.) (pnot b.))
-  (util.ax3 b. a.)
+  (util.ax3 (pnot phi) (pnot psi))
+  (util.ax3 psi phi)
 
 -- ~~a -> a
 th.prop.dneg.elim = rule.mp
   (util.reord
     (util.tran
-      (util.ax1 (pnot2 a.) (pnot2 (extract th.prop.impl.refl)))
+      (util.ax1 (pnot2 phi) (pnot2 (extract th.prop.impl.refl)))
       (util.inst th.prop.dneg2.elim (rawList
-        (pair a. (extract th.prop.impl.refl))
-        (pair b. a.)
+        (pair phi (extract th.prop.impl.refl))
+        (pair psi phi)
         nil))))
   th.prop.impl.refl
 
 -- a -> ~~a
 th.prop.dneg.intr = rule.mp
-  (util.ax3 (pnot2 a.) a.)
-  (rule.inst th.prop.dneg.elim a. (pnot a.))
+  (util.ax3 (pnot2 phi) phi)
+  (rule.inst th.prop.dneg.elim phi (pnot phi))
 
 -- (a -> b) -> ~b -> ~a
 -- th.prop.ax3.conv
 
 -- a -> ~b -> ~(a -> b)
--- th.prop.a.-b.-ab
+-- th.prop.phi-psi-ab
+
+test = util.impl.refl (forall a. (forall b. (impl phi (pelem a. b.))))

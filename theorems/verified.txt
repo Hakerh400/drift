@@ -9,3 +9,4 @@ th.prop.ant.intr
 th.prop.ant.intr.ext
 th.prop.dneg.intr
 th.prop.dneg.elim
+test

@@ -1,0 +1,48 @@
+head (Pair * a *) = a
+tail (Pair * * a) = a
+
+singleton a = pair a nil
+
+map f Nil = nil
+map f (Pair x xs) = pair (f x) (map f xs)
+
+foldl f z Nil = z
+foldl f z (Pair x xs) = foldl f (f z x) xs
+
+foldr f z Nil = z
+foldr f z (Pair x xs) = f x (foldr f z xs)
+
+all f list = foldl (all_ f) true list
+all_ f a b = and a (f b)
+
+any f list = foldl (any_ f) false list
+any_ f a b = or a (f b)
+
+rawList = rawList_ nil
+rawList_ list Nil = list
+rawList_ list a = rawList_ (pair a list)
+
+length = foldl (dot2 succ b1) zero
+
+empty = eq nil
+
+nempty = dot not empty
+
+elem e Nil = False
+elem e (Pair e *) = True
+elem e (Pair * rest) = elem e rest
+
+reverse list = reverse_ list nil
+reverse_ Nil list = list
+reverse_ (Pair x xs) list = reverse_ xs (pair x list)
+
+takeWhile f Nil = nil
+takeWhile f (Pair x xs) = ite (f x)
+  takeWhile_ (const3 nil) f x xs
+takeWhile_ f x xs = pair x (takeWhile f xs)
+
+dropWhile f Nil = nil
+dropWhile f y:(Pair x xs) = ite (f x)
+  dropWhile_1 dropWhile_2 f x xs
+dropWhile_1 f x xs = dropWhile f xs
+dropWhile_2 f x xs = pair x xs

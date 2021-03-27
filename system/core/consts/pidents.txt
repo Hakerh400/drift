@@ -1,0 +1,6 @@
+phi = pident zero
+psi = nextPident phi
+chi = nextPident psi
+theta = nextPident chi
+
+nextPident (Pident a) = pident (succ a)

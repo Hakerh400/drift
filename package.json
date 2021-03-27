@@ -15,7 +15,7 @@
     "test": "node test"
   },
   "dependencies": {
-    "omikron": "~1.2.54",
+    "omikron": "~1.2.55",
     "@hakerh400/list": "~1.0.6",
     "@hakerh400/fs-rec": "~1.0.4"
   },

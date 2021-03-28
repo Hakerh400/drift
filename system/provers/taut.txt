@@ -2,8 +2,8 @@
 --
 -- prove `prop`:
 --   pidents = get all pidents from `prop`
---   (supsList, stat) = split at boundary `prop`
---   isNorm = if the size of `supsList` is equal to the size of `pidents`
+--   (sups, stat) = split at boundary `prop`
+--   isNorm = if the size of `sups` is equal to the size of `pidents`
 -- 
 --   if not `isNorm`:
 --     missingPident = find pident that is missing
@@ -14,10 +14,10 @@
 --       r = MP p, y
 --     return r
 -- 
---   if `stat` is in `supsList`:
+--   if `stat` is in `sups`:
 --     apply `impl.refl`: stat -> stat
---     apply `util.mid` iteratively for all pidents from `supsList` that are after `stat`
---     apply `util.addSup` iteratively for all pidents from `supsList` that are before `stat`
+--     apply `util.mid` iteratively for all pidents from `sups` that are after `stat`
+--     apply `util.addSup` iteratively for all pidents from `sups` that are before `stat`
 -- 
 --   if `stat` is an implication (ant -> con):
 --     if `con` is true:
@@ -45,28 +45,28 @@ prove.taut prop = prove.taut_1
     (length (fst (prove.taut_splitAtBoundary prop)))
     (length (getPidents prop)))
 
-prove.taut_1 prop (Pair supsList stat) isNorm = ite isNorm
-  prove.taut_norm prove.taut_notNorm prop supsList stat
+prove.taut_1 prop (Pair sups stat) isNorm = ite isNorm
+  prove.taut_norm prove.taut_notNorm prop sups stat
 
-prove.taut_notNorm prop supsList stat = prove.taut_notNorm_1
+prove.taut_notNorm prop sups stat = prove.taut_notNorm_1
   prop
-  supsList
+  sups
   stat
-  (prove.taut_findMissingPident supsList stat)
+  (prove.taut_findMissingPident sups stat)
 
-prove.taut_notNorm_1 prop supsList stat missingPident = util.mp
+prove.taut_notNorm_1 prop sups stat missingPident = util.mp
   (util.mp
     (util.addSups
       (util.inst todo (rawList (psi missingPident) (psi prop) nil))
-      supsList)
+      sups)
     (prove.taut (impl missingPident prop)))
   (prove.taut (impl (pnot missingPident) prop))
 
-prove.taut_norm supsList stat = todo
+prove.taut_norm sups stat = todo
 
 prove.taut_splitAtBoundary prop = todo
 
-prove.taut_findMissingPident supsList stat = todo
+prove.taut_findMissingPident sups stat = todo
 
 todo = todo_ false
 todo_ True = id

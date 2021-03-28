@@ -235,6 +235,30 @@ th.prop.ant.indep_ a = util.addSup2 a
   (impl phi psi)
   (impl (pnot phi) psi)
 
+-- a -> ~a -> b
+th.prop.a.-a.b = util.mp
+  (th.prop.a.-a.b_ (rule.inst
+    th.prop.dneg.elim
+    phi
+    psi))
+  (util.mp
+    (util.mp
+      (th.prop.a.-a.b_ (util.inst th.prop.ax3.conv (rawList
+        (pair phi (pnot psi))
+        (pair psi (impl phi phi))
+        nil)))
+      (th.prop.a.-a.b_ (util.addSup
+        th.prop.impl.refl
+        (pnot psi)))
+    )
+    (rule.inst th.prop.a.-b.-ab psi phi))
+th.prop.a.-a.b_ a = util.addSup2 a
+  phi
+  (pnot phi)
+
+-- ~a -> a -> b
+th.prop.-a.a.b = util.reord th.prop.a.-a.b
+
 ----------------------------------------------------------------------------------------------------
 
-test = th.prop.ant.indep
+test = th.prop.-a.a.b

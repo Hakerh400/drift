@@ -9,8 +9,8 @@ const drift = require('..');
 const {Database} = drift;
 
 const main = () => {
-  drift.verifyAll(1);
-  // drift.verify('test', 1);
+  // drift.verifyAll(1);
+  drift.verify('test', 1);
 };
 
 main();

@@ -317,6 +317,14 @@ const info2str = info => {
         return str;
       }
 
+      if(op === 'Pnot'){
+        const a = yield [info2str, expr[1]];
+        let str = `~${a}`;
+
+        if(parens) return `(${str})`;
+        return str;
+      }
+
       if(op === 'Proof')
         return O.tco(info2str, expr[1]);
     }

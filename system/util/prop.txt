@@ -42,6 +42,7 @@ util.infer proofImpl:(Proof (Impl a b)) proofPremise = rule.mp
 util.infer.ax2 = util.infer th.prop.ax2
 util.infer.ax3 = util.infer th.prop.ax3
 util.infer.mpt = util.infer th.prop.mpt
+util.infer.inv = util.infer th.prop.ax3.conv
 
 util.reord = util.infer th.prop.reord
 

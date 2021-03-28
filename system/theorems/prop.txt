@@ -171,46 +171,70 @@ th.prop.a.-b.-ab = util.tran
   th.prop.a.ab.b
   (rule.inst th.prop.ax3.conv phi (impl phi psi))
 
--- (a -> b) -> (~a -> b) -> b
--- 
--- 1. SUP           a -> b
--- 2. SUP           ~a -> b
--- 3. CONV 2        ~b -> a
--- 4. TRAN 3 1      ~b -> b
--- 5. TR (below) 4  b
--- 
--- 
--- (~a -> a) -> a
--- 
--- 1. TH                  (~a -> ~~a) -> ~~a
--- 2. TH (~~a -> a)       ~~a -> a
--- 3. TRAN 1 2            (~a -> ~~a) -> a
--- 4. CONV 3              ~a -> ~(~a -> ~~a)
--- 5. TH (a -> ~~a)       a -> ~~a
--- 6. ANT 5               (~a -> a) -> (~a -> ~~a)
--- 6. CONV 6              ~(~a -> ~~a) -> ~(~a -> a)
--- 7. TRAN 4 6            ~a -> ~(~a -> a)
--- 8. AX3 7               (~a -> a) -> a
--- 
--- 
--- (a -> ~a) -> ~a
--- 
--- 1. th.prop.a.-b.-ab    a -> ~~a -> ~(a -> ~a)
--- 2. TH (~~a -> a)       ~~a -> a
--- 3. TRAN 2 1            ~~a -> ~~a -> ~(a -> ~a)
--- 4. TH                  ~~a -> ~(a -> ~a)
--- 5. CONV 4              (a -> ~a) -> ~a
--- 
--- 
+-- (a -> a -> b) -> a -> a
+th.prop.aab.aa = util.addSup
+  th.prop.impl.refl
+  (impl phi (impl phi psi))
+
 -- (a -> a -> b) -> a -> b
--- 
--- 1. SUP                 a -> a -> b
--- 2. ANT.EXT 1           (a -> a) -> (a -> a) -> a -> b
--- 3. MP 2 (a -> a)       (a -> a) -> a -> b
--- 4. MP 3 (a -> a)       a -> b
+th.prop.dant.elim = util.mp
+  (util.mp
+    (util.inst th.prop.ant.intr.ext (rawList
+      (pair psi phi)
+      (pair chi psi)
+      (pair theta phi)
+      nil))
+    th.prop.aab.aa)
+  th.prop.aab.aa
+
+-- (a -> ~a) -> ~a
+th.prop.a-a.-a = util.infer.ax3
+  (util.infer th.prop.dant.elim
+    (util.tran
+      th.prop.dneg.elim
+      (rule.inst th.prop.a.-b.-ab psi (pnot phi))))
+
+-- (~a -> a) -> a
+th.prop.-aa.a = util.infer.ax3
+  (util.tran
+    (util.infer.inv
+      (util.tran
+        (rule.inst th.prop.a-a.-a phi (pnot phi))
+        th.prop.dneg.elim))
+    (util.infer.inv
+      (util.ant.intr
+        th.prop.dneg.intr
+        (pnot phi))))
+
+-- (a -> b) -> (~a -> b) -> b
+th.prop.ant.indep = util.mp
+  (th.prop.ant.indep_ (rule.inst th.prop.-aa.a phi psi))
+  (util.mp
+    (util.mp
+      (th.prop.ant.indep_ (util.inst th.prop.impl.tran (rawList
+        (pair phi (pnot psi))
+        (pair psi phi)
+        (pair chi psi)
+        nil)))
+      (util.mp
+        (th.prop.ant.indep_ (util.addSup
+          th.prop.dneg.elim
+          (pnot psi)))
+        (util.mp
+          (th.prop.ant.indep_ (rule.inst
+            th.prop.ax3.conv
+            phi
+            (pnot phi)))
+          (util.addSup
+            (util.impl.refl (impl (pnot phi) psi))
+            (impl phi psi)))))
+    (util.mid
+      th.prop.ab.ab
+      (impl (pnot phi) psi)))
+th.prop.ant.indep_ a = util.addSup2 a
+  (impl phi psi)
+  (impl (pnot phi) psi)
 
 ----------------------------------------------------------------------------------------------------
 
-test = util.mp
-  (util.addSup2 (util.addSup (util.ax1 chi theta) chi) phi psi)
-  (util.addSup2 (util.impl.refl chi) phi psi)
+test = th.prop.ant.indep

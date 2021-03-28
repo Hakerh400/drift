@@ -10,3 +10,5 @@ th.prop.ant.intr.ext
 th.prop.dneg.intr
 th.prop.dneg.elim
 th.prop.ax3.conv
+th.prop.dant.elim
+th.prop.ant.indep

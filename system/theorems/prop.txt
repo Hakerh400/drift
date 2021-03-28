@@ -82,7 +82,7 @@ th.prop.abc.bab.bac = util.infer.mpt
   th.prop.abc.b.ab.ac
 
 -- (a -> b -> c) -> b -> a -> c
-th.prop.reord = util.mp
+th.prop.reord = util.mp.legacy
   th.prop.abc.bab.bac
   (util.addSup (util.ax1 psi phi) (impl phi (impl psi chi)))
 
@@ -170,3 +170,15 @@ th.prop.ax3.conv = util.tran
 th.prop.a.-b.-ab = util.tran
   th.prop.a.ab.b
   (rule.inst th.prop.ax3.conv phi (impl phi psi))
+
+-- c -> c -> d -> c
+-- c -> c
+-- 
+-- (c -> d -> c) -> c -> d -> c
+-- (c -> c -> d -> c) -> c -> c -> d -> c
+-- c -> c -> d -> c
+-- d -> c
+
+test = util.mp
+  (util.addSup2 (util.addSup (util.ax1 chi theta) chi) phi psi)
+  (util.addSup2 (util.impl.refl chi) phi psi)

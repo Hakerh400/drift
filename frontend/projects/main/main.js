@@ -21,7 +21,11 @@ const main = async () => {
     if(O.has(verified, th.name))
       th.verified = 1;
 
-  // ths.reverse().length = 1;
+  if(ths.length !== 0 && O.last(ths).name === 'test'){
+    const last = O.last(ths);
+    ths.length = 0;
+    ths.push(last);
+  }
 
   const center = O.ce(O.body, 'center');
   const table = O.ce(center, 'table');

@@ -12,8 +12,10 @@ util.inst_3 proof Nil Nil = proof
 util.inst_3 proof (Pair (Pair pident pred) pidents) (Pair avail avails) =
   util.inst_3 (rule.inst proof avail pred) pidents avails
 
+util.raw.1 a = rawList (pair phi a) nil
 util.raw.2 a b = rawList (pair phi a) (pair psi b) nil
 util.raw.3 a b c = rawList (pair phi a) (pair psi b) (pair chi c) nil
+util.raw.4 a b c d = rawList (pair phi a) (pair psi b) (pair chi c) (pair theta d) nil
 
 util.ax1 a b = util.inst ax.prop.1 (util.raw.2 a b)
 util.ax2 a b c = util.inst ax.prop.2 (util.raw.3 a b c)
@@ -49,9 +51,17 @@ util.mid2 proof a b = util.mid
   (util.mid proof b)
   a
 
-util.mp proof1:(Proof (Impl a (Impl b c))) proof2:(Proof (Impl a b)) = rule.mp
+util.mp.legacy proof1:(Proof (Impl a (Impl b c))) proof2:(Proof (Impl a b)) = rule.mp
   (util.infer.ax2 proof1)
   proof2
+
+util.mp proof1:(Proof pred1) proof2:(Proof pred2) = rule.mp
+  (rule.mp (util.mp_prepare pred1 pred2) proof1)
+  proof2
+util.mp_prepare (Impl a b) a = util.impl.refl (impl a b)
+util.mp_prepare (Impl a b) (Impl a c) = util.ant.intr.ext
+  (util.mp_prepare b c)
+  a
 
 util.impl.refl = rule.inst th.prop.impl.refl phi
 
@@ -67,4 +77,8 @@ util.tran p1:(Proof (Impl a b)) p2:(Proof (Impl b c)) = rule.mp
 
 util.ant.intr proof:(Proof (Impl a b)) c = rule.mp
   (util.inst th.prop.ant.intr (util.raw.3 a b c))
+  proof
+
+util.ant.intr.ext proof:(Proof (Impl a (Impl b c))) d = rule.mp
+  (util.inst th.prop.ant.intr.ext (util.raw.4 a b c d))
   proof

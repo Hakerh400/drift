@@ -10,6 +10,9 @@ const Info = require('./info');
 const cs = require('./ctors');
 const ident2sym = require('./ident2sym');
 const Expr = require('../theorems/expr');
+const debug = require('./debug');
+
+const SIMPLIFY_LOG = 1;
 
 const {tilde} = parser;
 const {isSym, isPair} = database;
@@ -241,6 +244,7 @@ const verify = (thName, force=0) => {
   };
 
   const th = O.rec(reduceIdent, thName);
+  log(info2str(th));
   const prop = O.rec(evalExpr, ths[thName]);
 
   assert(th.baseSym === ident2sym('Proof'));
@@ -287,6 +291,35 @@ const isVerified = thName => {
 const info2str = info => {
   const info2str = function*(info, parens=0){
     const {expr} = info;
+
+    if(SIMPLIFY_LOG){
+      const op = info.baseSym.description;
+
+      if(op === 'Pident'){
+        let n = 0;
+        let e = expr[1].expr
+
+        while(isPair(e)){
+          n++;
+          e = e[1].expr;
+        }
+
+        return O.sfcc(n + 97);
+      }
+
+      if(op === 'Impl'){
+        const a = yield [info2str, expr[0].expr[1], 1];
+        const b = yield [info2str, expr[1]];
+
+        let str = `${a} -> ${b}`;
+
+        if(parens) return `(${str})`;
+        return str;
+      }
+
+      if(op === 'Proof')
+        return O.tco(info2str, expr[1]);
+    }
 
     if(isSym(expr))
       return expr.description;

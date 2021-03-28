@@ -59,7 +59,7 @@ const expr2math = expr => {
     const argsNum = args.length;
 
     const disambiguate = str => {
-      if(prec > prec1) return `(${str})`;
+      if(prec > prec1) return `\\left(${str}\\right)`;
         return str;
     };
 

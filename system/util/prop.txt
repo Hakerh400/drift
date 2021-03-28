@@ -29,6 +29,8 @@ util.addSup2 proof sup1 sup2 = util.addSup
   (util.addSup proof sup2)
   sup1
 
+util.addSups = foldl util.addSup
+
 util.inst.auto proofUni:(Proof *) predInst = util.inst
   proofUni
   (autoPidentPredPairs (extract proofUni) predInst)

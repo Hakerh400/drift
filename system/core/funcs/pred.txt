@@ -24,8 +24,17 @@ getFreeIdents_ (Forall ident a) set = natSet.remove ident (getFreeIdents_ a set)
 getFreeIdents_ (Pelem a b) set = natSet.insert b (natSet.insert a set)
 
 hasFreeIdents = dot nempty getFreeIdents
-
 noFreeIdents = dot empty getFreeIdents
+
+getPidents p = getPidents_ p natSet.empty
+getPidents_ (Pident a) set = natSet.insert a set
+getPidents_ (Impl a b) set = getPidents_ b (getPidents_ a set)
+getPidents_ (Pnot a) set = getPidents_ a set
+getPidents_ (Forall ident a) set = getPidents_ a set
+getPidents_ (Pelem a b) set = set
+
+hasPidents = dot nempty getPidents
+noPidents = dot empty getPidents
 
 replaceIdent ident1 ident2 ident1 = ident2
 replaceIdent ident1 ident2 * = ident1

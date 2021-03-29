@@ -68,8 +68,9 @@ const main = async () => {
 
 const loadThs = async () => {
   const str = await O.rfs(thsFile, 1);
+  const thsInfo = O.sanll(str, 0).slice(-10);
 
-  return O.sanll(str, 0).map(str => {
+  return thsInfo.map(str => {
     const lines = O.sanl(str);
     const name = lines[0];
     const propStr = lines[1];

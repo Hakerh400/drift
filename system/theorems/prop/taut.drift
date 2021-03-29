@@ -24,3 +24,13 @@ th.prop.disj.com = prove.taut (synt.iff (synt.or phi psi) (synt.or psi phi))
 
 -- a ^ b <-> b ^ a
 th.prop.conj.com = prove.taut (synt.iff (synt.and phi psi) (synt.and psi phi))
+
+-- ~(a v b) <-> ~a ^ ~b
+th.prop.de-morgan.1 = prove.taut (synt.iff
+  (pnot (synt.or phi psi))
+  (synt.and (pnot phi) (pnot psi)))
+
+-- ~(a ^ b) <-> ~a v ~b
+th.prop.de-morgan.2 = prove.taut (synt.iff
+  (pnot (synt.and phi psi))
+  (synt.or (pnot phi) (pnot psi)))

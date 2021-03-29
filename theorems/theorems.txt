@@ -89,3 +89,11 @@ Disjunction is commutative
 th.prop.conj.com
 synt.iff (synt.and phi psi) (synt.and psi phi)
 Conjunction is commutative
+
+th.prop.de-morgan.1
+synt.iff (pnot (synt.or phi psi)) (synt.and (pnot phi) (pnot psi))
+First De Morgan's law: the negation of a disjunction is the conjunction of the negations
+
+th.prop.de-morgan.2
+synt.iff (pnot (synt.and phi psi)) (synt.or (pnot phi) (pnot psi))
+Second De Morgan's law: the negation of a conjunction is the disjunction of the negations

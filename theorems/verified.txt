@@ -21,3 +21,5 @@ th.prop.disj.def
 th.prop.conj.def
 th.prop.disj.com
 th.prop.conj.com
+th.prop.de-morgan.1
+th.prop.de-morgan.2

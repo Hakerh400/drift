@@ -38,7 +38,13 @@ const verified = O.arr2obj(O.sanl(O.rfs(verifiedFile, 1), 0));
 
 const prog = parser.parse(systemDir);
 
-const verifyAll = (force=0) => {
+const hasIdent = ident => {
+  return prog.hasIdent(ident);
+};
+
+const verifyAll = (force=0, reuseDb=1) => {
+  const db = reuseDb ? new database.OperativeDatabase() : null;
+
   if(force){
     for(const thName of O.keys(verified))
       delete verified[thName];
@@ -50,8 +56,8 @@ const verifyAll = (force=0) => {
     log(thName);
     log.inc();
 
-    if(prog.hasIdent(thName)){
-      verify(thName);
+    if(hasIdent(thName)){
+      verify(thName, 0, db);
     }else{
       log('Skip');
     }
@@ -60,7 +66,7 @@ const verifyAll = (force=0) => {
   }
 };
 
-const verify = (thName, force=0) => {
+const verify = (thName, force=0, db=null) => {
   const update = status => {
     updateVerified(thName, status);
   };
@@ -70,7 +76,8 @@ const verify = (thName, force=0) => {
     update(0);
   }
 
-  const db = new database.OperativeDatabase();
+  if(db === null)
+    db = new database.OperativeDatabase();
 
   const reduceIdent = function*(ident){
     const sym = prog.ident2sym(ident);
@@ -379,6 +386,7 @@ const error = msg => {
 module.exports = {
   verifyAll,
   verify,
+  hasIdent,
   // reduceIdent,
   // info2str,
 };

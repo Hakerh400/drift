@@ -50,6 +50,7 @@ const main = async () => {
     await mathjax.typeset(expr);
 
     const desc = O.ce(tr, 'td');
+    desc.classList.add('desc');
     desc.innerText = th.desc;
 
     const verified = O.ce(tr, 'td');

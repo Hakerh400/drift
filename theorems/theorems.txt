@@ -54,6 +54,18 @@ th.prop.ant.indep
 impl (impl phi psi) (impl (impl (pnot phi) psi) psi)
 If something can be concluded both from an antecedent and its negation, then it is independent of that antecedent
 
-test
-impl (pnot (impl phi psi)) (pnot psi)
-Test
+th.prop.iff.def.1
+impl (impl phi psi) (impl (impl psi phi) (synt.iff phi psi))
+Part 1 of equivalence definition
+
+th.prop.iff.def.2
+impl (synt.iff phi psi) (impl phi psi)
+Part 2 of equivalence definition
+
+th.prop.iff.def.3
+impl (synt.iff phi psi) (impl psi phi)
+Part 3 of equivalence definition
+
+th.prop.iff.refl
+synt.iff phi phi
+Equivalence is reflexive

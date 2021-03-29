@@ -1,0 +1,11 @@
+-- (a -> b) -> (b -> a) -> (a <-> b)
+th.prop.iff.def.1 = prove.taut (impl (impl phi psi) (impl (impl psi phi) (synt.iff phi psi)))
+
+-- (a <-> b) -> a -> b
+th.prop.iff.def.2 = prove.taut (impl (synt.iff phi psi) (impl phi psi))
+
+-- (a <-> b) -> b -> a
+th.prop.iff.def.3 = prove.taut (impl (synt.iff phi psi) (impl psi phi))
+
+-- a <-> a
+th.prop.iff.refl = prove.taut (synt.iff phi phi)

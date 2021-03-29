@@ -12,4 +12,7 @@ th.prop.dneg.elim
 th.prop.ax3.conv
 th.prop.dant.elim
 th.prop.ant.indep
-test
+th.prop.iff.def.1
+th.prop.iff.def.2
+th.prop.iff.def.3
+th.prop.iff.refl

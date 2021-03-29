@@ -2,6 +2,7 @@ table.ths-table{
   border-style: solid;
   border-color: black;
   border-width: 1px 0px 0px 1px;
+  margin-bottom: 100px;
 }
 
 table.ths-table th,
@@ -11,6 +12,10 @@ table.ths-table td{
   border-color: black;
   border-width: 0px 1px 1px 0px;
   text-align: center;
+}
+
+.desc{
+  max-width: 340px;
 }
 
 .th-verified-cell{

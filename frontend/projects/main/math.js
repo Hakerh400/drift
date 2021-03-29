@@ -21,23 +21,28 @@ const idents = {
 };
 
 const ops = [
-  'impl',
-  'pnot',
-  'pelem',
-  'forall',
+  ['impl', 'synt.iff'],
+  ['pnot'],
+  ['pelem'],
+  ['forall'],
 ];
+
+const forceParens = O.arr2obj([
+  'synt.iff',
+]);
 
 const precs = O.obj();
 
-ops.forEach((op, index) => {
-  precs[op] = index << 1;
+ops.forEach((ops, index) => {
+  for(const op of ops)
+    precs[op] = index << 1;
 });
 
 const precMin = -1;
 const precMax = O.N;
 
 const expr2math = expr => {
-  const expr2math = function*(expr, prec=precMin){
+  const expr2math = function*(expr, opPrev=null, prec=precMin){
     if(expr.isSym){
       const {name} = expr;
 
@@ -59,28 +64,39 @@ const expr2math = expr => {
     const argsNum = args.length;
 
     const disambiguate = str => {
-      if(prec > prec1) return `\\left(${str}\\right)`;
-        return str;
+      const parens = (
+        (opPrev !== null && O.has(forceParens, op)) ||
+        prec > prec1 ||
+        (prec === prec1 && opPrev !== op)
+      );
+
+      if(parens) return `\\left(${str}\\right)`;
+      return str;
     };
 
     if(op === 'impl')
       return disambiguate(`${
-        yield [expr2math, args[0], prec1 + 1]} \\to ${
-        yield [expr2math, args[1], prec1]}`);
+        yield [expr2math, args[0], op, prec1 + 1]} \\to ${
+        yield [expr2math, args[1], op, prec1]}`);
 
     if(op === 'pnot')
       return disambiguate(`\\lnot ${
-        yield [expr2math, args[0], prec1]}`);
+        yield [expr2math, args[0], op, prec1]}`);
 
     if(op === 'forall')
       return disambiguate(`\\forall ${
-        yield [expr2math, args[0], precMax]} ${
-        yield [expr2math, args[1], prec1]}`);
+        yield [expr2math, args[0], op, precMax]} ${
+        yield [expr2math, args[1], op, prec1]}`);
 
     if(op === 'pelem')
       return disambiguate(`${
-        yield [expr2math, args[0], precMax]} \\in ${
-        yield [expr2math, args[1], precMax]}`);
+        yield [expr2math, args[0], op, precMax]} \\in ${
+        yield [expr2math, args[1], op, precMax]}`);
+
+    if(op === 'synt.iff')
+      return disambiguate(`${
+        yield [expr2math, args[0], op, precMax]} \\leftrightarrow ${
+        yield [expr2math, args[1], op, precMax]}`);
 
     assert.fail(op);
   };

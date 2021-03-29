@@ -9,8 +9,11 @@ const drift = require('..');
 const {Database} = drift;
 
 const main = () => {
-  // drift.verifyAll(1);
-  drift.verify('test', 1);
+  if(drift.hasIdent('test')){
+    drift.verify('test', 1);
+  }else{
+    drift.verifyAll(1);
+  }
 };
 
 main();

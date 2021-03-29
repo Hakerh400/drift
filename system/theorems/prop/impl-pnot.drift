@@ -257,8 +257,3 @@ th.prop.a.-a.b_ a = util.addSup2 a
 
 -- ~a -> a -> b
 th.prop.-a.a.b = util.reord th.prop.a.-a.b
-
-----------------------------------------------------------------------------------------------------
-
-test = prove.taut prop
-prop = impl (pnot (impl phi psi)) (pnot psi)

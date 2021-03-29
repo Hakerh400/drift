@@ -50,6 +50,8 @@ util.mid proof:(Proof (Impl a b)) c = rule.mp
   (util.inst th.prop.mid (util.raw.3 a b c))
   proof
 
+util.mids = foldl util.mid
+
 util.mid2 proof a b = util.mid
   (util.mid proof b)
   a

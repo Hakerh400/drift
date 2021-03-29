@@ -53,3 +53,7 @@ Double antecedent elimination
 th.prop.ant.indep
 impl (impl phi psi) (impl (impl (pnot phi) psi) psi)
 If something can be concluded both from an antecedent and its negation, then it is independent of that antecedent
+
+test
+impl (pnot (impl phi psi)) (pnot psi)
+Test

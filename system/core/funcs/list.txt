@@ -1,5 +1,5 @@
-head (Pair * a *) = a
-tail (Pair * * a) = a
+head = fst
+tail  = snd
 
 singleton a = pair a nil
 
@@ -28,8 +28,8 @@ empty = eq nil
 
 nempty = dot not empty
 
-elem e Nil = False
-elem e (Pair e *) = True
+elem e Nil = false
+elem e (Pair e *) = true
 elem e (Pair * rest) = elem e rest
 
 reverse list = reverse_ list nil
@@ -46,3 +46,12 @@ dropWhile f y:(Pair x xs) = ite (f x)
   dropWhile_1 dropWhile_2 f x xs
 dropWhile_1 f x xs = dropWhile f xs
 dropWhile_2 f x xs = pair x xs
+
+filter f Nil = nil
+filter f (Pair x xs) = ite (f x)
+  (pair x (filter f xs))
+  (filter f xs)
+
+split a list = pair
+  (takeWhile (neq a) list)
+  (tail (dropWhile (neq a) list))

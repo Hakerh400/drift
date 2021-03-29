@@ -3,3 +3,5 @@ Pair:
 
 fst (Pair a *) = a
 snd (Pair * a) = a
+
+pswap (Pair a b) = pair b a

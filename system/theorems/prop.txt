@@ -249,8 +249,7 @@ th.prop.a.-a.b = util.mp
         nil)))
       (th.prop.a.-a.b_ (util.addSup
         th.prop.impl.refl
-        (pnot psi)))
-    )
+        (pnot psi))))
     (rule.inst th.prop.a.-b.-ab psi phi))
 th.prop.a.-a.b_ a = util.addSup2 a
   phi
@@ -261,4 +260,5 @@ th.prop.-a.a.b = util.reord th.prop.a.-a.b
 
 ----------------------------------------------------------------------------------------------------
 
-test = th.prop.-a.a.b
+test = prove.taut prop
+prop = impl (pnot (impl phi psi)) (pnot psi)

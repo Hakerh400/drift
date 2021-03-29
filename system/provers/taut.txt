@@ -46,7 +46,9 @@ prove.taut prop = prove.taut_1
     (length (getPidents prop)))
 
 prove.taut_1 prop (Pair sups stat) isNorm = ite isNorm
-  prove.taut_norm prove.taut_notNorm prop sups stat
+  prove.taut_norm
+  prove.taut_notNorm
+  prop sups stat
 
 prove.taut_notNorm prop sups stat = prove.taut_notNorm_1
   prop
@@ -56,17 +58,102 @@ prove.taut_notNorm prop sups stat = prove.taut_notNorm_1
 
 prove.taut_notNorm_1 prop sups stat missingPident = util.mp
   (util.mp
-    (util.addSups
-      (util.inst todo (rawList (psi missingPident) (psi prop) nil))
-      sups)
+    (util.inst th.prop.ant.indep (rawList
+      (pair phi missingPident)
+      (pair psi prop)
+      nil))
     (prove.taut (impl missingPident prop)))
   (prove.taut (impl (pnot missingPident) prop))
 
-prove.taut_norm sups stat = todo
+prove.taut_norm prop sups stat = ite (elem stat sups)
+  prove.taut_norm_statInSups
+  prove.taut_norm_statNotInSups
+  prop sups stat
 
-prove.taut_splitAtBoundary prop = todo
+prove.taut_norm_statInSups prop sups stat = callWithPair
+  (prove.taut_norm_statInSups_1
+    (util.impl.refl stat))
+  (pswap (split stat sups))
 
-prove.taut_findMissingPident sups stat = todo
+prove.taut_norm_statInSups_1 refl sups mids = util.addSups
+  (util.mids refl mids)
+  sups
 
-todo = todo_ false
-todo_ True = id
+-- if `expr` is an implication (x -> y)
+--   prove `prop` in which `stat` is replaced with `x`
+--   prove `prop` in which `stat` is replaced with `~y`
+--   apply a -> ~b -> ~(a -> b)
+--
+-- if `expr` is a negation (~x):
+--   prove `prop` in which `stat` is replaced with `x`
+--   apply double negation introduction
+
+prove.taut_norm_statNotInSups prop sups stat:(Impl ant con) = ite (prove.taut_eval sups con)
+  prove.taut_norm_statNotInSups_con
+  prove.taut_norm_statNotInSups_ant
+  prop sups stat
+prove.taut_norm_statNotInSups prop sups (Pnot (Impl x y)) = util.mp
+  (util.mp
+    (util.addSups (util.inst th.prop.a.-b.-ab (rawList
+      (pair phi x)
+      (pair psi y)
+      nil)) sups)
+    (prove.taut (prove.taut_addSups x sups)))
+  (prove.taut (prove.taut_addSups (pnot y) sups))
+prove.taut_norm_statNotInSups prop sups (Pnot (Pnot x)) = util.mp
+  (util.addSups (rule.inst th.prop.dneg.intr phi x) sups)
+  (prove.taut (prove.taut_addSups x sups))
+
+prove.taut_norm_statNotInSups_con prop sups stat:(Impl ant con) = util.mp
+  (util.addSups (util.ax1 con ant) sups)
+  (prove.taut (prove.taut_addSups con sups))
+
+prove.taut_norm_statNotInSups_ant prop sups stat:(Impl ant con) = util.mp
+  (util.addSups (util.inst th.prop.-a.a.b (rawList
+    (pair phi ant)
+    (pair psi con)
+    nil)) sups)
+  (prove.taut (prove.taut_addSups (pnot ant) sups))
+
+prove.taut_splitAtBoundary stat = prove.taut_splitAtBoundary_supsStat nil stat
+
+prove.taut_splitAtBoundary_supsStat sups (Impl sup:pident:(Pident *) rest) = ite (prove.taut_supsHasPident sups pident)
+  prove.taut_splitAtBoundary_ret
+  prove.taut_splitAtBoundary_next
+  sups sup rest
+prove.taut_splitAtBoundary_supsStat sups (Impl sup:(Pnot pident:(Pident *)) rest) = ite (prove.taut_supsHasPident sups pident)
+  prove.taut_splitAtBoundary_ret
+  prove.taut_splitAtBoundary_next
+  sups sup rest
+prove.taut_splitAtBoundary_supsStat sups stat = pair sups stat
+
+prove.taut_splitAtBoundary_ret sups sup rest = pair sups (impl sup rest)
+
+prove.taut_splitAtBoundary_next sups sup rest = prove.taut_splitAtBoundary_supsStat
+  (pair sup sups)
+  rest
+
+prove.taut_supsHasPident Nil pident = false
+prove.taut_supsHasPident (Pair sup sups) pident = or
+  (prove.taut_supHasPident sup pident)
+  (prove.taut_supsHasPident sups pident)
+
+prove.taut_supHasPident pident pident = true
+prove.taut_supHasPident (Pnot pident) pident = true
+prove.taut_supHasPident * * = false
+
+prove.taut_findMissingPident sups (Impl a b) = nilOrSmth
+  (prove.taut_findMissingPident sups a)
+  (prove.taut_findMissingPident sups b)
+prove.taut_findMissingPident sups (Pnot a) = prove.taut_findMissingPident sups a
+prove.taut_findMissingPident sups pident:(Pident *) = ite (prove.taut_supsHasPident sups pident)
+  nil
+  pident
+
+prove.taut_eval sups (Impl a b) = or
+  (not (prove.taut_eval sups a))
+  (prove.taut_eval sups b)
+prove.taut_eval sups (Pnot a) = not (prove.taut_eval sups a)
+prove.taut_eval sups pident:(Pident *) = elem pident sups
+
+prove.taut_addSups = foldl (swap impl)

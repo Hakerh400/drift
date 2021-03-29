@@ -17,8 +17,5 @@ or False a = a
 and False * = false
 and True a = a
 
-eq a a = true
-eq * * = false
-
 ite True = b1
 ite False = b0

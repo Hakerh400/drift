@@ -82,6 +82,20 @@ const verify = (thName, force=0) => {
     return O.tco(reduce, info);
   };
 
+  const stack = [];
+
+  const getStackTrace = () => {
+    return stack.slice().reverse().map(frame => {
+      const [func, args] = frame;
+
+      return `${
+        func.description}${
+        args.length !== 0 ? ` --- ${
+          args.map(arg => info2str(arg)).join(`,${
+          ' '.repeat(2)}`)}` : ''}`;
+    }).join('\n');
+  };
+
   const reduce = function*(info){
     if(info.reducedTo !== null)
       return info.reducedTo;
@@ -103,11 +117,13 @@ const verify = (thName, force=0) => {
       return db.reduceToItself(info);
 
     const err = msg => {
-      error(`${msg}\n\n${info2str(info)}`);
+      error(`${msg}\n\n${info2str(info)}\n\n${getStackTrace()}`);
     };
 
     const {cases} = func;
     const casesNum = cases.length;
+
+    stack.push([baseSym, args]);
 
     tryCase: for(let i = 0; i !== casesNum; i++){
       const fcase = cases[i];
@@ -227,6 +243,8 @@ const verify = (thName, force=0) => {
 
       const reduced = yield [simplify, rhsExpr];
       
+      stack.pop();
+
       return db.reduce(info, reduced);
     }
 
@@ -318,11 +336,8 @@ const info2str = info => {
       }
 
       if(op === 'Pnot'){
-        const a = yield [info2str, expr[1]];
-        let str = `~${a}`;
-
-        if(parens) return `(${str})`;
-        return str;
+        const a = yield [info2str, expr[1], 1];
+        return `~${a}`;
       }
 
       if(op === 'Proof')

@@ -1,0 +1,4 @@
+nilOrSmth Nil a = a
+nilOrSmth a * = a
+
+callWithPair f (Pair a b) = f a b

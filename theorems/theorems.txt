@@ -69,3 +69,23 @@ Part 3 of equivalence definition
 th.prop.iff.refl
 synt.iff phi phi
 Equivalence is reflexive
+
+th.prop.iff.com
+synt.iff (synt.iff phi psi) (synt.iff psi phi)
+Equivalence is commutative
+
+th.prop.disj.def
+synt.iff (synt.or phi psi) (impl (pnot phi) psi)
+Disjunction definition
+
+th.prop.conj.def
+synt.iff (synt.and phi psi) (pnot (impl phi (pnot psi)))
+Conjunction definition
+
+th.prop.disj.com
+synt.iff (synt.or phi psi) (synt.or psi phi)
+Disjunction is commutative
+
+th.prop.conj.com
+synt.iff (synt.and phi psi) (synt.and psi phi)
+Conjunction is commutative

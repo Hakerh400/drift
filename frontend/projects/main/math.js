@@ -22,6 +22,7 @@ const idents = {
 
 const ops = [
   ['impl', 'synt.iff'],
+  ['synt.or', 'synt.and'],
   ['pnot'],
   ['pelem'],
   ['forall'],
@@ -95,8 +96,18 @@ const expr2math = expr => {
 
     if(op === 'synt.iff')
       return disambiguate(`${
-        yield [expr2math, args[0], op, precMax]} \\leftrightarrow ${
-        yield [expr2math, args[1], op, precMax]}`);
+        yield [expr2math, args[0], op, prec1 + 1]} \\leftrightarrow ${
+        yield [expr2math, args[1], op, prec1 + 1]}`);
+
+    if(op === 'synt.or')
+      return disambiguate(`${
+        yield [expr2math, args[0], op, prec1]} \\lor ${
+        yield [expr2math, args[1], op, prec1 + 1]}`);
+
+    if(op === 'synt.and')
+      return disambiguate(`${
+        yield [expr2math, args[0], op, prec1]} \\land ${
+        yield [expr2math, args[1], op, prec1 + 1]}`);
 
     assert.fail(op);
   };

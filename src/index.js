@@ -53,16 +53,11 @@ const verifyAll = (force=0, reuseDb=1) => {
   }
 
   for(const thName of O.keys(ths)){
-    log(thName);
-    log.inc();
-
     if(hasIdent(thName)){
       verify(thName, 0, db);
     }else{
       log('Skip');
     }
-
-    log.dec();
   }
 };
 
@@ -75,6 +70,8 @@ const verify = (thName, force=0, db=null) => {
     if(!force) return;
     update(0);
   }
+  
+  log(thName);
 
   if(db === null)
     db = new database.OperativeDatabase();
@@ -269,7 +266,7 @@ const verify = (thName, force=0, db=null) => {
   };
 
   const th = O.rec(reduceIdent, thName);
-  log(info2str(th));
+  // log(info2str(th));
   const prop = O.rec(evalExpr, ths[thName]);
 
   assert(th.baseSym === ident2sym('Proof'));

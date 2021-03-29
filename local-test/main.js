@@ -12,7 +12,7 @@ const main = () => {
   if(drift.hasIdent('test')){
     drift.verify('test', 1);
   }else{
-    drift.verifyAll(1);
+    drift.verifyAll();
   }
 };
 

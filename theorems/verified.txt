@@ -16,3 +16,8 @@ th.prop.iff.def.1
 th.prop.iff.def.2
 th.prop.iff.def.3
 th.prop.iff.refl
+th.prop.iff.com
+th.prop.disj.def
+th.prop.conj.def
+th.prop.disj.com
+th.prop.conj.com

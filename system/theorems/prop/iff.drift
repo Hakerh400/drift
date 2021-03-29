@@ -9,3 +9,18 @@ th.prop.iff.def.3 = prove.taut (impl (synt.iff phi psi) (impl psi phi))
 
 -- a <-> a
 th.prop.iff.refl = prove.taut (synt.iff phi phi)
+
+-- (a <-> b) <-> (b <-> a)
+th.prop.iff.com = prove.taut (synt.iff (synt.iff phi psi) (synt.iff psi phi))
+
+-- a v b <-> (~a -> b)
+th.prop.disj.def = prove.taut (synt.iff (synt.or phi psi) (impl (pnot phi) psi))
+
+-- a ^ b <-> ~(a -> ~b)
+th.prop.conj.def = prove.taut (synt.iff (synt.and phi psi) (pnot (impl phi (pnot psi))))
+
+-- a v b <-> b v a
+th.prop.disj.com = prove.taut (synt.iff (synt.or phi psi) (synt.or psi phi))
+
+-- a ^ b <-> b ^ a
+th.prop.conj.com = prove.taut (synt.iff (synt.and phi psi) (synt.and psi phi))

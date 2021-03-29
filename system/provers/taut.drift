@@ -89,34 +89,34 @@ prove.taut_norm_statNotInSups prop sups (Pnot (Impl x y)) = util.mp
       (pair phi x)
       (pair psi y)
       nil)) sups)
-    (prove.taut (prove.taut_addSups x sups)))
-  (prove.taut (prove.taut_addSups (pnot y) sups))
+    (prove.taut_addSupsAndProve x sups))
+  (prove.taut_addSupsAndProve (pnot y) sups)
 prove.taut_norm_statNotInSups prop sups (Pnot (Pnot x)) = util.mp
   (util.addSups (rule.inst th.prop.dneg.intr phi x) sups)
-  (prove.taut (prove.taut_addSups x sups))
+  (prove.taut_addSupsAndProve x sups)
 
 prove.taut_norm_statNotInSups_con prop sups stat:(Impl ant con) = util.mp
   (util.addSups (util.ax1 con ant) sups)
-  (prove.taut (prove.taut_addSups con sups))
+  (prove.taut_addSupsAndProve con sups)
 
 prove.taut_norm_statNotInSups_ant prop sups stat:(Impl ant con) = util.mp
   (util.addSups (util.inst th.prop.-a.a.b (rawList
     (pair phi ant)
     (pair psi con)
     nil)) sups)
-  (prove.taut (prove.taut_addSups (pnot ant) sups))
+  (prove.taut_addSupsAndProve (pnot ant) sups)
 
 prove.taut_splitAtBoundary stat = prove.taut_splitAtBoundary_supsStat nil stat
 
-prove.taut_splitAtBoundary_supsStat sups (Impl sup:pident:(Pident *) rest) = ite (prove.taut_supsHasPident sups pident)
-  prove.taut_splitAtBoundary_ret
-  prove.taut_splitAtBoundary_next
-  sups sup rest
-prove.taut_splitAtBoundary_supsStat sups (Impl sup:(Pnot pident:(Pident *)) rest) = ite (prove.taut_supsHasPident sups pident)
-  prove.taut_splitAtBoundary_ret
-  prove.taut_splitAtBoundary_next
-  sups sup rest
+prove.taut_splitAtBoundary_supsStat sups (Impl sup:pident:(Pident *) stat) =
+  prove.taut_splitAtBoundary_supsStat_1 sups sup pident stat
+prove.taut_splitAtBoundary_supsStat sups (Impl sup:(Pnot pident:(Pident *)) stat) =
+  prove.taut_splitAtBoundary_supsStat_1 sups sup pident stat
 prove.taut_splitAtBoundary_supsStat sups stat = pair sups stat
+prove.taut_splitAtBoundary_supsStat_1 sups sup pident stat = ite (prove.taut_supsHasPident sups pident)
+  prove.taut_splitAtBoundary_ret
+  prove.taut_splitAtBoundary_next
+  sups sup stat
 
 prove.taut_splitAtBoundary_ret sups sup rest = pair sups (impl sup rest)
 
@@ -148,3 +148,7 @@ prove.taut_eval sups (Pnot a) = not (prove.taut_eval sups a)
 prove.taut_eval sups pident:(Pident *) = elem pident sups
 
 prove.taut_addSups = foldl (swap impl)
+
+prove.taut_addSupsAndProve = dot2
+  prove.taut
+  prove.taut_addSups

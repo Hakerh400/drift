@@ -18,6 +18,8 @@ const {
   err,
 } = tokenizer;
 
+const FILE_EXT = 'drift';
+
 const ident2symFunc = ident2sym;
 
 const tilde = ident2sym('~');
@@ -45,7 +47,7 @@ const parse = dir => {
 
   new fsRec.Directory(dir).topDown(file => {
     if(!file.isFile) return;
-    if(file.ext !== 'txt') return;
+    if(file.ext !== FILE_EXT) return;
 
     const str = O.rfs(file.pth, 1);
 

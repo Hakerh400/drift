@@ -11,19 +11,29 @@ th.prop.iff.def.3 = prove.taut (impl (synt.iff phi psi) (impl psi phi))
 th.prop.iff.refl = prove.taut (synt.iff phi phi)
 
 -- (a <-> b) <-> (b <-> a)
-th.prop.iff.com = prove.taut (synt.iff (synt.iff phi psi) (synt.iff psi phi))
+th.prop.iff.com = prove.taut (synt.iff
+  (synt.iff phi psi)
+  (synt.iff psi phi))
 
 -- a v b <-> (~a -> b)
-th.prop.disj.def = prove.taut (synt.iff (synt.or phi psi) (impl (pnot phi) psi))
+th.prop.or.def = prove.taut (synt.iff
+  (synt.or phi psi)
+  (impl (pnot phi) psi))
 
 -- a ^ b <-> ~(a -> ~b)
-th.prop.conj.def = prove.taut (synt.iff (synt.and phi psi) (pnot (impl phi (pnot psi))))
+th.prop.and.def = prove.taut (synt.iff
+  (synt.and phi psi)
+  (pnot (impl phi (pnot psi))))
 
 -- a v b <-> b v a
-th.prop.disj.com = prove.taut (synt.iff (synt.or phi psi) (synt.or psi phi))
+th.prop.or.com = prove.taut (synt.iff
+  (synt.or phi psi)
+  (synt.or psi phi))
 
 -- a ^ b <-> b ^ a
-th.prop.conj.com = prove.taut (synt.iff (synt.and phi psi) (synt.and psi phi))
+th.prop.and.com = prove.taut (synt.iff
+  (synt.and phi psi)
+  (synt.and psi phi))
 
 -- ~(a v b) <-> ~a ^ ~b
 th.prop.de-morgan.1 = prove.taut (synt.iff
@@ -34,3 +44,23 @@ th.prop.de-morgan.1 = prove.taut (synt.iff
 th.prop.de-morgan.2 = prove.taut (synt.iff
   (pnot (synt.and phi psi))
   (synt.or (pnot phi) (pnot psi)))
+
+-- (a -> b -> c) <-> (a ^ b -> c)
+th.prop.ants.conj = prove.taut (synt.iff
+  (impl phi (impl psi chi))
+  (impl (synt.and phi psi) chi))
+
+-- a v b v c <-> a v (b v c)
+th.prop.or.assoc = prove.taut (synt.iff
+  (synt.or (synt.or phi psi) chi)
+  (synt.or phi (synt.or psi chi)))
+
+-- a ^ b ^ c <-> a ^ (b ^ c)
+th.prop.and.assoc = prove.taut (synt.iff
+  (synt.and (synt.and phi psi) chi)
+  (synt.and phi (synt.and psi chi)))
+
+-- ((a <-> b) <-> c) <-> (a <-> (b <-> c))
+th.prop.iff.assoc = prove.taut (synt.iff
+  (synt.iff (synt.iff phi psi) chi)
+  (synt.iff phi (synt.iff psi chi)))

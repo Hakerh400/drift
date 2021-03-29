@@ -9,6 +9,8 @@ const dir = require('./dir');
 
 await O.addStyle('style.css');
 
+const MAX_THS_NUM = null;
+
 const thsDir = dir('theorems');
 const thsFile = path.join(thsDir, 'theorems.txt');
 const verifiedFile = path.join(thsDir, 'verified.txt');
@@ -68,7 +70,10 @@ const main = async () => {
 
 const loadThs = async () => {
   const str = await O.rfs(thsFile, 1);
-  const thsInfo = O.sanll(str, 0).slice(-10);
+  let thsInfo = O.sanll(str, 0);
+
+  if(MAX_THS_NUM !== null)
+    thsInfo = thsInfo.slice(-MAX_THS_NUM);
 
   return thsInfo.map(str => {
     const lines = O.sanl(str);

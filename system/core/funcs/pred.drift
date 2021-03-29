@@ -58,6 +58,9 @@ hasIdent_ ident (Pnot a) = hasIdent_ ident a
 hasIdent_ ident (Forall ident *) = false
 hasIdent_ ident (Forall * a) = hasIdent_ ident a
 hasIdent_ ident (Pelem a b) = or (eq ident a) (eq ident b)
+hasIdent_ ident ident = true
+hasIdent_ ident Zero = false
+hasIdent_ ident (Succ *) = false
 
 hasFreeIdent ident Nil = false
 hasFreeIdent ident (Pair a b) = or (hasFreeIdent ident a) (hasFreeIdent ident b)

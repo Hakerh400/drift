@@ -70,11 +70,12 @@ const verify = (thName, force=0, db=null) => {
     if(!force) return;
     update(0);
   }
-  
-  log(thName);
 
-  if(db === null)
+  if(db === null){
     db = new database.OperativeDatabase();
+  }else{
+    log(thName);
+  }
 
   const reduceIdent = function*(ident){
     const sym = prog.ident2sym(ident);
@@ -266,7 +267,12 @@ const verify = (thName, force=0, db=null) => {
   };
 
   const th = O.rec(reduceIdent, thName);
-  // log(info2str(th));
+
+  if(!O.has(ths, thName)){
+    log(info2str(th));
+    O.exit();
+  }
+
   const prop = O.rec(evalExpr, ths[thName]);
 
   assert(th.baseSym === ident2sym('Proof'));

@@ -24,7 +24,7 @@ const ops = [
   ['impl', 'synt.iff'],
   ['synt.or', 'synt.and'],
   ['pnot'],
-  ['pelem'],
+  ['pelem', 'synt.eq'],
   ['forall'],
 ];
 
@@ -108,6 +108,11 @@ const expr2math = expr => {
       return disambiguate(`${
         yield [expr2math, args[0], op, prec1]} \\land ${
         yield [expr2math, args[1], op, prec1 + 1]}`);
+
+    if(op === 'synt.eq')
+      return disambiguate(`${
+        yield [expr2math, args[0], op, prec]} = ${
+        yield [expr2math, args[1], op, prec]}`);
 
     assert.fail(op);
   };

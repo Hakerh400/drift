@@ -74,19 +74,19 @@ th.prop.iff.com
 synt.iff (synt.iff phi psi) (synt.iff psi phi)
 Equivalence is commutative
 
-th.prop.disj.def
+th.prop.or.def
 synt.iff (synt.or phi psi) (impl (pnot phi) psi)
 Disjunction definition
 
-th.prop.conj.def
+th.prop.and.def
 synt.iff (synt.and phi psi) (pnot (impl phi (pnot psi)))
 Conjunction definition
 
-th.prop.disj.com
+th.prop.or.com
 synt.iff (synt.or phi psi) (synt.or psi phi)
 Disjunction is commutative
 
-th.prop.conj.com
+th.prop.and.com
 synt.iff (synt.and phi psi) (synt.and psi phi)
 Conjunction is commutative
 
@@ -97,3 +97,23 @@ First De Morgan's law: the negation of a disjunction is the conjunction of the n
 th.prop.de-morgan.2
 synt.iff (pnot (synt.and phi psi)) (synt.or (pnot phi) (pnot psi))
 Second De Morgan's law: the negation of a conjunction is the disjunction of the negations
+
+th.prop.ants.conj
+synt.iff (impl phi (impl psi chi)) (impl (synt.and phi psi) chi)
+Two antecedents can be grouped into a single antecedent via conjuction
+
+th.prop.or.assoc
+synt.iff (synt.or (synt.or phi psi) chi) (synt.or phi (synt.or psi chi))
+Disjunction is associative
+
+th.prop.and.assoc
+synt.iff (synt.and (synt.and phi psi) chi) (synt.and phi (synt.and psi chi))
+Conjunction is associative
+
+th.prop.iff.assoc
+synt.iff (synt.iff (synt.iff phi psi) chi) (synt.iff phi (synt.iff psi chi))
+Equivalence is associative
+
+th.eq.refl
+forall a. (synt.eq a. a.)
+Equality is reflexive

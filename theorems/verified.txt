@@ -17,9 +17,13 @@ th.prop.iff.def.2
 th.prop.iff.def.3
 th.prop.iff.refl
 th.prop.iff.com
-th.prop.disj.def
-th.prop.conj.def
-th.prop.disj.com
-th.prop.conj.com
+th.prop.or.def
+th.prop.and.def
+th.prop.or.com
+th.prop.and.com
 th.prop.de-morgan.1
 th.prop.de-morgan.2
+th.prop.ants.conj
+th.prop.or.assoc
+th.prop.and.assoc
+th.prop.iff.assoc

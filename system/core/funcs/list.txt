@@ -1,5 +1,5 @@
 head = fst
-tail  = snd
+tail = snd
 
 singleton a = pair a nil
 

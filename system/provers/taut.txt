@@ -79,15 +79,6 @@ prove.taut_norm_statInSups_1 refl sups mids = util.addSups
   (util.mids refl mids)
   sups
 
--- if `expr` is an implication (x -> y)
---   prove `prop` in which `stat` is replaced with `x`
---   prove `prop` in which `stat` is replaced with `~y`
---   apply a -> ~b -> ~(a -> b)
---
--- if `expr` is a negation (~x):
---   prove `prop` in which `stat` is replaced with `x`
---   apply double negation introduction
-
 prove.taut_norm_statNotInSups prop sups stat:(Impl ant con) = ite (prove.taut_eval sups con)
   prove.taut_norm_statNotInSups_con
   prove.taut_norm_statNotInSups_ant

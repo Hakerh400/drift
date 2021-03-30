@@ -3,16 +3,45 @@ pnot3 = dot pnot pnot2
 
 proof2pred (Proof a) = pred a
 
-substPident pident:(Pident *) p pident = p
-substPident pident:(Pident *) p a:(Pident *) = a
-substPident pident:(Pident *) p (Impl a b) = impl (substPident pident p a) (substPident pident p b)
-substPident pident:(Pident *) p (Pnot a) = pnot (substPident pident p a)
-substPident pident:(Pident *) p (Forall a b) = forall a (substPident pident p b)
-substPident pident:(Pident *) p a:(Pelem * *) = a
+substPidentStrict = substPidentStrict_idents natSet.empty
+substPidentStrict_idents idents pident expr pident = assert
+  (natSet.fold (substPidentStrict_fold expr) true idents)
+  expr
+substPidentStrict_idents idents pident expr p:(Pident *) = p
+substPidentStrict_idents idents pident expr (Impl a b) = impl
+  (substPidentStrict_idents idents pident expr a)
+  (substPidentStrict_idents idents pident expr b)
+substPidentStrict_idents idents pident expr (Pnot a) = pnot
+  (substPidentStrict_idents idents pident expr a)
+substPidentStrict_idents idents pident expr (Forall a b) = forall a
+  (substPidentStrict_idents (natSet.insert a idents) pident expr b)
+substPidentStrict_idents idents pident expr p:(Pelem * *) = p
+substPidentStrict_fold expr ok ident = and ok (not (hasIdent ident expr))
+
+substIdentStrict = substIdentStrict_idents natSet.empty
+substIdentStrict_idents idents ident1 ident2 p:(Pident *) = p
+substIdentStrict_idents idents ident1 ident2 (Impl a b) = impl
+  (substIdentStrict_idents idents ident1 ident2 a)
+  (substIdentStrict_idents idents ident1 ident2 b)
+substIdentStrict_idents idents ident1 ident2 (Pnot a) = pnot
+  (substIdentStrict_idents idents ident1 ident2 a)
+substIdentStrict_idents idents ident1 ident2 p:(Forall ident1 *) = p
+substIdentStrict_idents idents ident1 ident2 (Forall a b) = forall a
+  (substIdentStrict_idents (natSet.insert a idents) ident1 ident2 b)
+substIdentStrict_idents idents ident1 ident2 (Pelem a b) =
+  assert (not (natSet.has ident2 idents))
+    (pelem (replaceIdent ident1 ident2 a) (replaceIdent ident1 ident2 b))
+
+substPident pident p pident = p
+substPident pident p a:(Pident *) = a
+substPident pident p (Impl a b) = impl (substPident pident p a) (substPident pident p b)
+substPident pident p (Pnot a) = pnot (substPident pident p a)
+substPident pident p (Forall a b) = forall a (substPident pident p b)
+substPident pident p a:(Pelem * *) = a
 
 substIdent ident1 ident2 (Impl a b) = impl (substIdent ident1 ident2 a) (substIdent ident1 ident2 b)
 substIdent ident1 ident2 (Pnot a) = pnot (substIdent ident1 ident2 a)
-substIdent ident1 ident2 x:(Forall ident1 b) = x
+substIdent ident1 ident2 p:(Forall ident1 b) = p
 substIdent ident1 ident2 (Forall a b) = forall a (substIdent ident1 ident2 b)
 substIdent ident1 ident2 (Pelem a b) = pelem (replaceIdent ident1 ident2 a) (replaceIdent ident1 ident2 b)
 
@@ -39,20 +68,19 @@ noPidents = dot empty getPidents
 replaceIdent ident1 ident2 ident1 = ident2
 replaceIdent ident1 ident2 * = ident1
 
-hasPident pident:(Pident *) Nil = false
-hasPident pident:(Pident *) (Pair a b) = or (hasPident pident a) (hasPident pident b)
-hasPident pident:(Pident *) a = hasPident_ pident a
-hasPident_ pident:(Pident *) pident = true
-hasPident_ pident:(Pident *) (Pident *) = false
-hasPident_ pident:(Pident *) (Impl a b) = or (hasPident_ pident a) (hasPident_ pident b)
-hasPident_ pident:(Pident *) (Pnot a) = hasPident_ pident a
-hasPident_ pident:(Pident *) (Forall * a) = hasPident_ pident a
-hasPident_ pident:(Pident *) (Pelem a b) = false
+hasPident pident Nil = false
+hasPident pident (Pair a b) = or (hasPident pident a) (hasPident pident b)
+hasPident pident a = hasPident_ pident a
+hasPident_ pident pident = true
+hasPident_ pident (Pident *) = false
+hasPident_ pident (Impl a b) = or (hasPident_ pident a) (hasPident_ pident b)
+hasPident_ pident (Pnot a) = hasPident_ pident a
+hasPident_ pident (Forall * a) = hasPident_ pident a
+hasPident_ pident (Pelem a b) = false
 
 hasIdent ident Nil = false
 hasIdent ident (Pair a b) = or (hasIdent ident a) (hasIdent ident b)
 hasIdent ident a = hasIdent_ ident a
-hasIdent_ ident (Pident *) = false
 hasIdent_ ident (Impl a b) = or (hasIdent_ ident a) (hasIdent_ ident b)
 hasIdent_ ident (Pnot a) = hasIdent_ ident a
 hasIdent_ ident (Forall ident *) = false

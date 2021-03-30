@@ -112,7 +112,7 @@ const tokenize = function*(str, func){
       /\s+/, O.nop,
 
       a => {
-        err(`Invalid syntax near\n\n${a}`);
+        err(`Invalid syntax\n\n${a}`);
       },
     ]);
 

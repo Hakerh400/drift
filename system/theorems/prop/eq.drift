@@ -1,0 +1,17 @@
+-- Ɐa Ɐb (a = b <-> Ɐc (c ∈ a <-> c ∈ b) ^ Ɐc (a ∈ c <-> b ∈ c))
+th.eq.def = util.uni.intr
+  (util.uni.intr
+    (util.iff.refl (synt.eq a. b.))
+    b.)
+  a.
+
+-- Ɐa (a = a)
+th.eq.refl = util.uni.intr
+  (util.and
+    (util.uni.intr
+      (util.iff.refl (pelem b. a.))
+      b.)
+    (util.uni.intr
+      (util.iff.refl (pelem a. b.))
+      b.))
+  a.

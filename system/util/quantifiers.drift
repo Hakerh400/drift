@@ -1,0 +1,9 @@
+util.uni.intr proof:(Proof pred) ident =
+  util.uni.intr_ proof ident (availIdent pred)
+util.uni.intr_ proof ident avail = rule.mp
+  (rule.uni.intr
+    (util.addSup
+      proof
+      (implr (pelem avail avail)))
+    ident)
+  (util.impl.refl (pelem avail avail))

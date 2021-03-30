@@ -1,6 +1,7 @@
 natSet.empty = nil
 
-natSet.has = elem
+natSet.has n = natSet.fold (natSet.has_ n) false
+natSet.has_ n has m = or has (eq n m)
 
 natSet.insert Zero Nil = singleton true
 natSet.insert Zero (Pair * xs) = pair true xs
@@ -11,3 +12,8 @@ natSet.remove n set = reverse (dropWhile not (natSet.remove_ n (reverse set)))
 natSet.remove_ * Nil = nil
 natSet.remove_ Zero (Pair * xs) = pair false xs
 natSet.remove_ (Succ n) (Pair x xs) = pair x (natSet.remove_ n xs)
+
+natSet.fold f z set = natSet.fold_ f z set zero
+natSet.fold_ f z Nil n = z
+natSet.fold_ f z (Pair False rest) n = natSet.fold_ f z rest (succ n)
+natSet.fold_ f z (Pair True rest) n = natSet.fold_ f (f z n) rest (succ n)

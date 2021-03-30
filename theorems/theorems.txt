@@ -114,6 +114,10 @@ th.prop.iff.assoc
 synt.iff (synt.iff (synt.iff phi psi) chi) (synt.iff phi (synt.iff psi chi))
 Equivalence is associative
 
+th.eq.def
+forall a. (forall b. (synt.iff (synt.eq a. b.) (synt.and (forall c. (synt.iff (pelem c. a.) (pelem c. b.))) (forall c. (synt.iff (pelem a. c.) (pelem b. c.))))))
+Equality definition
+
 th.eq.refl
 forall a. (synt.eq a. a.)
 Equality is reflexive

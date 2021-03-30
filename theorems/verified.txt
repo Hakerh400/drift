@@ -27,3 +27,5 @@ th.prop.ants.conj
 th.prop.or.assoc
 th.prop.and.assoc
 th.prop.iff.assoc
+th.eq.def
+th.eq.refl

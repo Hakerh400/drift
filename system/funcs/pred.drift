@@ -1,0 +1,4 @@
+implr a = impl a a
+
+iff = synt.iff
+iffr a = iff a a

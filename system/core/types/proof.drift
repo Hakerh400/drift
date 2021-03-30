@@ -1,10 +1,23 @@
 Proof:
-  rule.inst_ (Proof phi) a:(Pident *) (Pred p) = assert (noFreeIdents p)
-    (Proof (substPident a p phi))
+  rule.inst_ (Proof pred) pident:(Pident *) (Pred expr) =
+    (Proof (substPidentStrict pident expr pred))
+  
   rule.mp (Proof (Impl a b)) (Proof a) = Proof b
 
+  rule.uni.intr_ (Proof (Impl a b)) (Nat c) = assert (not (hasIdent c a))
+    (Proof (impl a (forall c b)))
+
+  rule.uni.elim_ (Proof (Impl a (Forall b c))) (Nat d) =
+    Proof (impl a (substIdentStrict b d c))
+
   ax.prop.1 = Proof (impl phi (impl psi phi))
-  ax.prop.2 = Proof (impl (impl phi (impl psi chi)) (impl (impl phi psi) (impl phi chi)))
+
+  ax.prop.2 = Proof (impl
+    (impl phi (impl psi chi))
+    (impl (impl phi psi) (impl phi chi)))
+
   ax.prop.3 = Proof (impl (impl (pnot phi) (pnot psi)) (impl psi phi))
 
 rule.inst a b c = rule.inst_ a b (pred c)
+rule.uni.intr a b = rule.uni.intr_ a (nat b)
+rule.uni.elim a b = rule.uni.elim_ a (nat b)

@@ -7,9 +7,11 @@ const Theorem = require('./theorem');
 const mathjax = require('./mathjax');
 const dir = require('./dir');
 
-await O.addStyle('style.css');
+const LOCAL = O.url.startsWith('http://localhost/');
 
-const MAX_THS_NUM = null;
+const MAX_THS_NUM = LOCAL ? 10 ; null;
+
+await O.addStyle('style.css');
 
 const thsDir = dir('theorems');
 const thsFile = path.join(thsDir, 'theorems.txt');

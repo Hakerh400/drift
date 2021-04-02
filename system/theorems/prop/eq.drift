@@ -27,5 +27,5 @@ th.false.def = prove.taut
 -- T
 th.true = prove.taut synt.true
 
--- ⊥
+-- ~⊥
 th.nfalse = prove.taut (pnot synt.false)

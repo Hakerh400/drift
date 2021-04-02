@@ -66,7 +66,7 @@ hasPidents = dot nempty getPidents
 noPidents = dot empty getPidents
 
 replaceIdent ident1 ident2 ident1 = ident2
-replaceIdent ident1 ident2 * = ident1
+replaceIdent ident1 ident2 a = a
 
 hasPident pident Nil = false
 hasPident pident (Pair a b) = or (hasPident pident a) (hasPident pident b)

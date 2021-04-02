@@ -12,7 +12,7 @@ const ident2sym = require('./ident2sym');
 const Expr = require('../theorems/expr');
 const debug = require('./debug');
 
-const SIMPLIFY_LOG = 1;
+const PRETTY_LOG = 1;
 
 const {tilde} = parser;
 const {isSym, isPair} = database;
@@ -320,7 +320,7 @@ const info2str = info => {
   const info2str = function*(info, parens=0){
     const {expr} = info;
 
-    if(SIMPLIFY_LOG){
+    if(PRETTY_LOG){
       const op = info.baseSym.description;
 
       if(op === 'Pident'){

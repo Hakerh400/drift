@@ -97,3 +97,7 @@ util.and proof1:(Proof a) proof2:(Proof b) = rule.mp
       (util.raw.2 a b))
     proof1)
   proof2
+
+util.T.intr proof = util.addSup proof synt.true
+
+util.T.elim proof = rule.mp proof th.true

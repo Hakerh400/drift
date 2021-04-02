@@ -53,6 +53,12 @@ const expr2math = expr => {
       if(O.has(idents, name))
         return idents[name];
 
+      if(name === 'synt.true')
+        return `\\top`;
+
+      if(name === 'synt.false')
+        return `\\bot`;
+
       assert.fail();
       return;
     }

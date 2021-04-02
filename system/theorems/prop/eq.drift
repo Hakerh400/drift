@@ -15,3 +15,17 @@ th.eq.refl = util.uni.intr
       (util.iff.refl (pelem a. b.))
       b.))
   a.
+
+-- T <-> Ɐa (a = a)
+th.true.def = prove.taut
+  (synt.iff synt.true (forall a. (synt.eq a. a.)))
+
+-- ⊥ <-> ~T
+th.false.def = prove.taut
+  (synt.iff synt.false (pnot synt.true))
+
+-- T
+th.true = prove.taut synt.true
+
+-- ⊥
+th.nfalse = prove.taut (pnot synt.false)

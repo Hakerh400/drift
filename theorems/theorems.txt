@@ -121,3 +121,19 @@ Equality definition
 th.eq.refl
 forall a. (synt.eq a. a.)
 Equality is reflexive
+
+th.true.def
+synt.iff synt.true (forall a. (synt.eq a. a.))
+Definition of T
+
+th.false.def
+synt.iff synt.false (pnot synt.true)
+Definition of ⊥
+
+th.true
+synt.true
+True
+
+th.nfalse
+pnot synt.false
+Not false

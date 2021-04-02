@@ -42,7 +42,7 @@ const tokenize = function*(str, func){
   });
 
   if(lines.length === 0)
-    err(`Empty source code`);
+    return [];
 
   let spaces = null;
 

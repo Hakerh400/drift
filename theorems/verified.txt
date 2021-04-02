@@ -29,3 +29,7 @@ th.prop.and.assoc
 th.prop.iff.assoc
 th.eq.def
 th.eq.refl
+th.true.def
+th.false.def
+th.true
+th.nfalse

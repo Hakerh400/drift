@@ -9,7 +9,7 @@ const dir = require('./dir');
 
 const LOCAL = O.url.startsWith('http://localhost/');
 
-const MAX_THS_NUM = LOCAL ? 10 ; null;
+const MAX_THS_NUM = LOCAL ? 10 : null;
 
 await O.addStyle('style.css');
 

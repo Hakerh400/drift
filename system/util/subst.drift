@@ -1,1 +1,54 @@
-util.subst = id
+-- Given a predicate `pred` and a proof of `pred1 <-> pred2`
+-- Prove that `pred <-> pred_` where `pred_` is `pred` with
+-- all occurences of `pred1` replaced with `pred2`
+
+util.subst pred proof:(Proof predIff) = callWithPair
+  (util.subst_preds proof) (iff2pair predIff) pred
+
+-- Optimization
+util.subst_preds proof pred1 pred2 pred = ite (hasSubPred pred1 pred)
+  (util.subst_preds_raw proof pred1 pred2) util.iff.refl pred
+
+util.subst_preds_raw proof pred1 pred2 pred1 = proof
+util.subst_preds_raw proof pred1 pred2 pident:(Pident *) = util.iff.refl pident
+util.subst_preds_raw proof pred1 pred2 (Impl a b) = util.infer2
+  (prove.taut
+    (impl (synt.iff phi chi) (impl
+      (synt.iff psi theta) (synt.iff
+        (impl phi psi)
+        (impl chi theta)))))
+  (util.subst_preds proof pred1 pred2 a)
+  (util.subst_preds proof pred1 pred2 b)
+util.subst_preds_raw proof pred1 pred2 (Pnot a) = util.infer
+  (prove.taut
+    (impl (synt.iff phi psi) (synt.iff
+      (pnot phi)
+      (pnot psi))))
+  (util.subst_preds proof pred1 pred2 a)
+util.subst_preds_raw proof pred1 pred2 pelem:(Forall ident pred) = callWithPair
+  (util.subst_preds_forall
+    ident
+    (util.subst_preds proof pred1 pred2 pred))
+  (iff2pair (extract (util.subst_preds proof pred1 pred2 pred)))
+util.subst_preds_raw proof pred1 pred2 pelem:(Pelem * *) = util.iff.refl pelem
+
+util.subst_preds_forall ident proof p1 p2 = util.infer2
+  th.prop.iff.def.1
+  (util.subst_preds_forall_impl
+    ident
+    (util.infer
+      th.prop.iff.def.2
+      proof)
+    p1)
+  (util.subst_preds_forall_impl
+    ident
+    (util.infer
+      th.prop.iff.def.3
+      proof)
+    p2)
+
+util.subst_preds_forall_impl ident proof pred = rule.uni.intr ident
+  (util.tran
+    (rule.uni.elim ident
+      (util.impl.refl (forall ident pred)))
+    proof)

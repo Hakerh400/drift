@@ -4,10 +4,10 @@ Proof:
   
   rule.mp (Proof (Impl a b)) (Proof a) = Proof b
 
-  rule.uni.intr_ (Proof (Impl a b)) (Nat c) = assert (not (hasIdent c a))
+  rule.uni.intr_ (Nat c) (Proof (Impl a b)) = assert (not (hasIdent c a))
     (Proof (impl a (forall c b)))
 
-  rule.uni.elim_ (Proof (Impl a (Forall b c))) (Nat d) =
+  rule.uni.elim_ (Nat d) (Proof (Impl a (Forall b c))) =
     Proof (impl a (substIdentStrict b d c))
 
   ax.prop.1 = Proof (impl phi (impl psi phi))
@@ -19,5 +19,5 @@ Proof:
   ax.prop.3 = Proof (impl (impl (pnot phi) (pnot psi)) (impl psi phi))
 
 rule.inst a b c = rule.inst_ a b (pred c)
-rule.uni.intr a b = rule.uni.intr_ a (nat b)
-rule.uni.elim a b = rule.uni.elim_ a (nat b)
+rule.uni.intr a b = rule.uni.intr_ (nat a) b
+rule.uni.elim a b = rule.uni.elim_ (nat a) b

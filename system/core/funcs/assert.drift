@@ -1,3 +1,5 @@
 assert True = id
 
-assertEq a b = assert (eq a b)
+assert.fail = assert false
+
+assert.eq a b = assert (eq a b)

@@ -2,3 +2,25 @@ implr a = impl a a
 
 iff = synt.iff
 iffr a = iff a a
+
+op2pair func pred = op2pair_opPair (func phi psi) pred (pair nil nil)
+op2pair_opPair &phi pred (Pair Nil a) = pair pred a
+op2pair_opPair &phi pred (Pair pred a) = pair pred a
+op2pair_opPair &psi pred (Pair a Nil) = pair a pred
+op2pair_opPair &psi pred (Pair a pred) = pair a pred
+op2pair_opPair (Impl a1 b1) (Impl a2 b2) opPair = op2pair_opPair b1 b2 (op2pair_opPair a1 a2 opPair)
+op2pair_opPair (Pnot a1) (Pnot a2) opPair = op2pair_opPair a1 a2 opPair
+op2pair_opPair (Forall a b1) (Forall a b2) opPair = op2pair_opPair b1 b2 opPair
+op2pair_opPair (Pelem a b) (Pelem a b) opPair = opPair
+
+impl2pair (Impl a b) = pair a b
+or2pair = op2pair synt.or
+and2pair = op2pair synt.and
+iff2pair = op2pair iff
+
+hasSubPred sub sub = true
+hasSubPred sub (Pident *) = false
+hasSubPred sub (Impl a b) = or (hasSubPred sub a) (hasSubPred sub b)
+hasSubPred sub (Pnot a) = hasSubPred sub a
+hasSubPred sub (Forall * a) = hasSubPred sub a
+hasSubPred sub (Pelem * *) = false

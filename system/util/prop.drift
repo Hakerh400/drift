@@ -39,6 +39,14 @@ util.infer proofImpl:(Proof (Impl a b)) proofPremise = rule.mp
   (util.inst proofImpl (autoPidentPredPairs a (extract proofPremise)))
   proofPremise
 
+util.infer2 proofImpl proofPrem1 proofPrem2 = util.infer
+  (util.infer proofImpl proofPrem1)
+  proofPrem2
+
+util.infer3 proofImpl proofPrem1 proofPrem2 proofPrem3 = util.infer
+  (util.infer2 proofImpl proofPrem1 proofPrem2)
+  proofPrem3
+
 util.infer.ax2 = util.infer th.prop.ax2
 util.infer.ax3 = util.infer th.prop.ax3
 util.infer.mpt = util.infer th.prop.mpt

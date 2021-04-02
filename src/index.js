@@ -12,7 +12,7 @@ const ident2sym = require('./ident2sym');
 const Expr = require('../theorems/expr');
 const debug = require('./debug');
 
-const PRETTY_LOG = 1;
+const PRETTY_LOG = 0;
 
 const {tilde} = parser;
 const {isSym, isPair} = database;
@@ -98,7 +98,7 @@ const verify = (thName, force=0, db=null) => {
         args.length !== 0 ? ` --- ${
           args.map(arg => info2str(arg)).join(`,${
           ' '.repeat(2)}`)}` : ''}`;
-    }).join('\n');
+    }).join('\n\n');
   };
 
   const reduce = function*(info){
@@ -122,7 +122,10 @@ const verify = (thName, force=0, db=null) => {
       return db.reduceToItself(info);
 
     const err = msg => {
-      error(`${msg}\n\n${info2str(info)}\n\n${getStackTrace()}`);
+      log(`${msg}\n\n${info2str(info)}`);
+      O.logb();
+      log(getStackTrace());
+      O.exit();
     };
 
     const {cases} = func;
@@ -350,8 +353,10 @@ const info2str = info => {
         return `~${a}`;
       }
 
-      if(op === 'Proof')
-        return O.tco(info2str, expr[1]);
+      if(op === 'Proof'){
+        const a = yield [info2str, expr[1], 1];
+        return `|- ${a}`;
+      }
     }
 
     if(isSym(expr))

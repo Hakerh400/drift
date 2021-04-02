@@ -1,31 +1,47 @@
 -- Ɐa Ɐb (a = b <-> Ɐc (c ∈ a <-> c ∈ b) ^ Ɐc (a ∈ c <-> b ∈ c))
-th.eq.def = util.uni.intr
-  (util.uni.intr
-    (util.iff.refl (synt.eq a. b.))
-    b.)
-  a.
+th.eq.def = util.uni.intr a.
+  (util.uni.intr b.
+    (util.iff.refl (synt.eq a. b.)))
 
 -- Ɐa (a = a)
-th.eq.refl = util.uni.intr
+th.eq.refl = util.uni.intr a.
   (util.and
-    (util.uni.intr
-      (util.iff.refl (pelem b. a.))
-      b.)
-    (util.uni.intr
-      (util.iff.refl (pelem a. b.))
-      b.))
-  a.
+    (util.uni.intr b.
+      (util.iff.refl (pelem b. a.)))
+    (util.uni.intr b.
+      (util.iff.refl (pelem a. b.))))
 
--- T <-> Ɐa (a = a)
-th.true.def = prove.taut
-  (synt.iff synt.true (forall a. (synt.eq a. a.)))
+----------------------------------------------------------------------------------------------------
 
--- ⊥ <-> ~T
-th.false.def = prove.taut
-  (synt.iff synt.false (pnot synt.true))
-
--- T
-th.true = prove.taut synt.true
-
--- ~⊥
-th.nfalse = prove.taut (pnot synt.false)
+-- th_a = id
+--   (util.and
+--     (util.uni.intr b.
+--       (util.iff.refl (pelem b. a.)))
+--     (util.uni.intr b.
+--       (util.iff.refl (pelem a. b.))))
+-- 
+-- th_b = id
+--   (util.and
+--     (util.uni.intr a.
+--       (util.iff.refl (pelem a. b.)))
+--     (util.uni.intr a.
+--       (util.iff.refl (pelem b. a.))))
+-- 
+-- iff_ab = util.infer2
+--   (prove.taut (impl phi
+--     (impl psi (synt.iff phi psi))))
+--   th_a
+--   th_b
+-- 
+-- th1 = util.uni.intr c.
+--   (util.infer
+--     (rule.inst
+--       (prove.taut (impl phi (synt.or phi psi)))
+--       psi (pelem c. d.))
+--     th_a)
+-- 
+-- test = rule.mp
+--   (util.infer
+--     th.prop.iff.def.2
+--     (util.subst (extract th1) iff_ab))
+--   th1

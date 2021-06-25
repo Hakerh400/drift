@@ -100,7 +100,7 @@ Second De Morgan's law: the negation of a conjunction is the disjunction of the 
 
 th.prop.ants.conj
 synt.iff (impl phi (impl psi chi)) (impl (synt.and phi psi) chi)
-Two antecedents can be grouped into a single antecedent via conjuction
+Two antecedents can be grouped into a single antecedent via conjunction
 
 th.prop.or.assoc
 synt.iff (synt.or (synt.or phi psi) chi) (synt.or phi (synt.or psi chi))
